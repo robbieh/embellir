@@ -1,6 +1,7 @@
 (ns embellir.curator
   (:gen-class)
-  (:require [clj-time.local]
+  (:require [clojure.inspector :only atom?]
+      [clj-time.local]
             [clj-time.core]
             [clj-time.coerce])
   )
@@ -21,8 +22,9 @@
 ;should this look for the highest key?
 ;should the key be UUIDs instead?
 (defn next-collection-key 
-  "Return the next key to be used in the @collection map"
-  [] (-> @collection count str keyword))
+  "Return the next key to be used in the @collection map as an int"
+;  [] (-> @collection count str keyword))
+    [] (count @collection))
 
 (defn queue-item [item-id]
   (let [item-keyword (-> item-id str keyword )]
@@ -32,14 +34,41 @@
                              (-> @collection item-keyword :time-to-live)
                              (clj-time.coerce/to-long (clj-time.local/local-now) )))})))
 
+(defn curate 
+  "Define an item that the curator will watch over:
+  itemname - handy string holding a human-friendly item name
+  atomx - a Clojure atom holding the initial state of the item to be curated
+  function - a function the curator will use to update the item
+    note: swap! will be called on the atom and function
+  time-to-live - the curator will update the atom after this amount of time passes
+    note: milliseconds"
+  [itemname atomx function time-to-live]
+  (assert (string? itemname))
+  (assert (clojure.inspector/atom? atomx))
+  (assert (fn? function))
+  (assert (> time-to-live 0))
+  (let [itemkey (next-collection-key)]
+    (swap! collection #(assoc % (-> itemkey str keyword)
+                            {:name itemname
+                             :atom atomx
+                             :function function
+                             :time-to-live time-to-live}))
+       (queue-item itemkey)))
+
+(defn get-itemid-by-name
+  "Searches for an item ID by :name"
+  []
+  ())
+
+
 ;finds the item 
-(defn run-item [item-key]
+(defn run-item [item-id]
   "Fetch the item from @collection 
   Then apply the item's :function to the item's :atom"
-  (assert (>= item-key 0))
-  (assert (> (count @collection) item-key))
-;  (println "run-item: " item-key)
-  (let [item (get @collection (-> item-key str keyword))
+  (assert (>= item-id 0))
+  (assert (> (count @collection) item-id))
+;  (println "run-item: " item-id)
+  (let [item (get @collection (-> item-id str keyword))
         itematom (:atom item)
         itemfunc (:function item)]
 ;        (println "run-item: " item itematom itemfunc)
@@ -48,20 +77,31 @@
 (defn manage-queue []
   (loop [item (.take updateq)]
 ;    (println "found item: " item (get item :collection-key))
-    (run-item (get item :collection-key))
-    (queue-item (get item :collection-key))
-    (when (.peek updateq)
-;      (println "something is in the queue")
-      (let [newitem (.peek updateq)
-            newitemtime (:time newitem)
-            newitemtimelong (clj-time.coerce/to-long (:time newitem))
-            now (clj-time.coerce/to-long (clj-time.local/local-now))
-            timedifference (- newitemtimelong now)]
-;        (println newitem newitemtime newitemtimelong now timedifference)
-        (if (> timedifference 0) 
-;          (println "sleeping: " (min timedifference 1000))
-          (Thread/sleep (min timedifference 10)))))
+    (let [itemtime (:time item)
+          itemtimelong (clj-time.coerce/to-long (:time item))
+          now (clj-time.coerce/to-long (clj-time.local/local-now))
+          timedifference (- itemtimelong now)] ;negative when item time is in the past
+      (if (< timedifference 0)
+        (do (run-item (get item :collection-key))
+            (queue-item (get item :collection-key)))
+        (do (Thread/sleep (min timedifference 1000))
+            (.put updateq item))))
     (recur (.take updateq))))
+
+
+
+;    (when (.peek updateq)
+;      (println "something is in the queue")
+;      (let [newitem (.peek updateq)
+;            newitemtime (:time newitem)
+;            newitemtimelong (clj-time.coerce/to-long (:time newitem))
+;            now (clj-time.coerce/to-long (clj-time.local/local-now))
+;            timedifference (- newitemtimelong now)]
+;        (println newitem newitemtime newitemtimelong now timedifference)
+;        (if (> timedifference 0) 
+;          (println "sleeping: " (min timedifference 1000))
+;          (Thread/sleep (min timedifference 10)))))
+;    (recur (.take updateq))))
 
 (defn start-curator []
   "Starts the curator in a separate thread"
