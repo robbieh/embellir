@@ -1,6 +1,7 @@
 (ns embellir.curator
   (:gen-class)
   (:require [clj-time.local]
+            [clj-time.core]
             [clj-time.coerce])
   )
 
@@ -11,10 +12,11 @@
   "The items should hold :name :function :atom :time-to-live"
   (atom {}))
 
-;remember: conj, peek, pop it
+;remember: .put .take .peek
+(def timemap-comparator (comparator (fn [a b] (clj-time.core/before? (:time a) (:time b)))))
 (def timemap
   "A list of maps with :time to be executed and :collection-key of item to be executed"
-  (java.util.concurrent.LinkedBlockingQueue. 5))
+  (java.util.concurrent.PriorityBlockingQueue. 5 timemap-comparator))
 
 ;should this look for the highest key?
 ;should the key be UUIDs instead?
@@ -26,6 +28,8 @@
 (defn run-item [item-key]
   "Fetch the item from @collection"
   "Then apply the item's :function to the item's :atom"
+  (assert (>= 0 item-key))
+  (assert (< (count @collection) item-key))
   (let [item (get @collection (-> item-key str keyword))
         itematom (:atom item)]
     (println item)
@@ -33,6 +37,7 @@
 
 (defn manage-queue []
   (loop [item (.take updateq)]
+    (println "found item: " item)
     (run-item (:colleciton-key item))
     (let [newitem (.peek updateq)
           newitemtime (:time newitem)
