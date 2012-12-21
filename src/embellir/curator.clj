@@ -37,20 +37,20 @@
 (defn curate 
   "Define an item that the curator will watch over:
   itemname - handy string holding a human-friendly item name
-  atomx - a Clojure atom holding the initial state of the item to be curated
+  itemdata - the data you wish to curate
   function - a function the curator will use to update the item
-    note: swap! will be called on the atom and function
+    note: swap! will be called on the itemdata and function
   time-to-live - the curator will update the atom after this amount of time passes
     note: milliseconds"
-  [itemname atomx function time-to-live]
+  [itemname itemdata function time-to-live]
   (assert (string? itemname))
-  (assert (clojure.inspector/atom? atomx))
+;  (assert (clojure.inspector/atom? atomx))
   (assert (fn? function))
   (assert (> time-to-live 0))
   (let [itemkey (next-collection-key)]
-    (swap! collection #(assoc % (-> itemkey str keyword)
+    (swap! collection #(assoc % (-> itemkey str keyword) 
                             {:name itemname
-                             :atom atomx
+                             :atom (atom itemdata)
                              :function function
                              :time-to-live time-to-live}))
        (queue-item itemkey)))
@@ -107,9 +107,3 @@
   "Starts the curator in a separate thread"
   (.start (Thread. manage-queue)))
 
-(defn xcolset [] 
-  (def collection (atom 
-                    {:0 {:atom (atom 0) :function inc :time-to-live 10000 :name "counter1"}
-                     :1 {:atom (atom 0) :function inc :time-to-live 5000 :name "counter2"}
-                     }))
-  )
