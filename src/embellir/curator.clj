@@ -7,8 +7,7 @@
   )
 
 (def collection 
-  "A map of 'curios' to be curated. Keys are the name
-  The curios should be a map holding :function :atom :time-to-live"
+  "A map of 'curios' to be curated."
   (atom {}))
 
 ;remember: .put .take .peek
@@ -49,19 +48,20 @@
 (defn trash-curio [itemname]
     (swap! collection #(dissoc % itemname)))
 
+(defn list-curios [] (keys @collection))
+
 (defn run-item [itemname]
   "Fetch the item from @collection 
   Then apply the item's :function to the item's :atom"
-  ;  (println "run-item: " item-id)
   (let [item (get @collection itemname)
         itematom (:atom item)
         itemfunc (:function item)]
-    ;        (println "run-item: " item itematom itemfunc)
     (swap! itematom itemfunc)))
 
 (defn manage-queue []
   (loop [item (.take updateq)]
     ;    (println "found item: " item (get item :collection-key))
+    (try
     (let [itemtime (:time item)
           itemtimelong (clj-time.coerce/to-long (:time item))
           now (clj-time.coerce/to-long (clj-time.local/local-now))
@@ -71,6 +71,7 @@
           (queue-item (get item :collection-key)))
         (do (Thread/sleep (min timedifference 1000))
           (.put updateq item))))
+      (catch Exception e (str "Exception in manage-queue: " (.getMessage e))))
     (recur (.take updateq))))
 
 (defn start-curator []
