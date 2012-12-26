@@ -57,14 +57,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn draw-alpha [e]
-  (stroke 255)
-  (fill 255)
-  (text (curator/get-curio "stringflipper1") 0 0))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 (create-component "position" :x :y :r)
 (create-component "bound" :shape :width :height :more)
 (create-component "drawing" :fn)
@@ -72,22 +64,6 @@
 (create-component "spin" :endrad :starttime :endtime :rate-fn)
 (create-component "resize" :endwidth :endheight :starttime :endtime :rate-fn)
 
-
-(create-entity "alphaloop" 
-               (position 20 20)
-               (bound :square 20 20)
-               (drawing  draw-alpha)
-)
-
-
-(defn xillus
-  "load up the illustrations list with some simple tests
-  start the curator, too"
-  []
-
-  (def illustrations (atom {} ) )
-
-  )
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -96,10 +72,10 @@
   (sys-draw)
   )
 
-(defn mksk []
+(defn start-sketch []
   (defsketch illustrator
              :title "embellir"
              :size [600 500]
              :setup setup
-             :draw draw
-             ))
+             :draw draw))
+
