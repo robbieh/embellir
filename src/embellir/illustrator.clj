@@ -1,21 +1,16 @@
 (ns embellir.illustrator
   (:gen-class)
-  (:require [embellir.curator :as curator])
+  (:require [clj-time]
+            [clj-time.coerce]
+            [clj-time.local])
   (:use [quil.core])
   )
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn setup []
-  (frame-rate 10)
-  (smooth))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def entities
-  "the entities in this component entity system"
-  (atom []))
+(def entities "the entities in this component entity system" (atom []))
 
 (defn create-component
   [compname & compmap]
@@ -29,6 +24,10 @@
   (let [entmap (apply merge entcomps)]
     (swap! entities #(conj % (conj {:name entname} entmap)))))
 
+(defn remove-entity
+  "Removes entity with the given name"
+  [entname]
+  (swap! entities #(remove (fn match-name [entity] (= (:name entity) entname)) %)))
 
 (defn get-entities 
   "returns all entities with the requested component
@@ -39,24 +38,24 @@
 (defn sys-draw
   "draws everything with a draw component, using the :fn from it"
   []
-;  (println (get-entities :draw))
+  ;  (println (get-entities :draw))
   (doseq [entity (get-entities :drawing)]
     (let [drawcomp (:drawing entity)
           poscomp (:position entity)
           drawfn (:fn drawcomp)
           ]
-;      (println "drawing: " (:name entity))
-;      (println "with: " drawfn)
-;      (println "at: " (:x poscomp) (:y poscomp))
       (push-style) (push-matrix) 
       (translate (:x poscomp) (:y poscomp))
       (drawfn entity)
       (pop-matrix) (pop-style)
       )))
 
+
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;standard components
 (create-component "position" :x :y :r)
 (create-component "bound" :shape :width :height :more)
 (create-component "drawing" :fn)
@@ -66,6 +65,15 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn setup []
+  (create-entity "polar clock"
+                 (position (* 0.5 (width)) (* 0.5 (height)))
+                 (bound :round (min (width) (height)) (min (width) (height)))
+                 (drawing embellir.baubles.polarclock/draw-polarclock))
+
+  (frame-rate 10)
+  (smooth))
 
 (defn draw []
   (background 0)

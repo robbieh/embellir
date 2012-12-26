@@ -6,5 +6,5 @@
   :dependencies [[org.clojure/clojure "1.4.0"]
                  [clj-time "0.4.4"]
                  [quil "1.6.0"]]
-  :profiles {:dev {:dependencies [[clj-ns-browser "1.3.0"]]}}
+;  :profiles {:dev {:dependencies [[clj-ns-browser "1.3.0"]]}}
   :main embellir.core)
