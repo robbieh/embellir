@@ -16,14 +16,14 @@
     (fill 255)
     (text (curator/get-curio "stringflipper1") 0 0))
 
-(curate "stringflipper1" "abcdefghijklmnopqrstuvwxyz" clojure.string/reverse 1000)
+(defn draw-circle [e]
+  (stroke 255)
+  (fill 255)
+  (let [width (get-in e [:bound :width])
+        height (get-in e [:bound :height])]
+    (ellipse 0 0 width height)))
 
-(illus/create-entity "alphaloop" 
-                              (position 20 20)
-                              (drawing  draw-alpha))
-(illus/create-entity "alphaloop2" 
-                              (position 20 100)
-                              (drawing  draw-alpha))
+(curate "stringflipper1" "abcdefghijklmnopqrstuvwxyz" clojure.string/reverse 1000)
 
 
 (defn start-illustration []
