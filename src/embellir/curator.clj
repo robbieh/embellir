@@ -26,7 +26,7 @@
 (defn curate 
   "Define an item that the curator will watch over:
   itemname - handy string holding a human-friendly item name
-  itemdata - the data you wish to curate
+  itemdata - the data you wish to curate; if it is a function, curate the result of that fn
   function - a function the curator will use to update the item
     note: swap! will be called on the itemdata and function
   time-to-live - the curator will update the atom after this amount of time passes

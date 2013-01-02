@@ -1,4 +1,4 @@
-(ns embellir.baubles.polarclock
+(ns embellir.doodles.polarclock
   (:gen-class)
   (:import (java.util Calendar Date))
   (:require [clj-time.core :as clj-time]
@@ -36,35 +36,37 @@
 (defn radians-for-this-month []
   (/ TWO-PI (.getActualMaximum (calNow) Calendar/DAY_OF_MONTH)))
 
-(defn draw-monthclock []
+(defn draw-monthclock [entity]
   ;  (rotate (- PI))
   (rotate (- HALF-PI))
   (push-matrix)
   (push-style)
   (stroke 0 75 25)
   (stroke-weight 1)
-  (let [x     (* (width) 0.5)
-        y     (* (height) 0.5)]
+  (let [width (:width (:bound entity))
+        x     (* width 0.5)
+        y     (* width 0.5)]
     (doseq [day (range 0 (.getActualMaximum (calNow) java.util.Calendar/DAY_OF_MONTH))]
-      (line  (* (height) (* 0.90 0.5))  0 (* (height) (* 0.95 0.5)) 0)
+      (line  (* width (* 0.90 0.5))  0 (* width (* 0.95 0.5)) 0)
       (rotate (radians-for-this-month))
       )
     )
   (stroke-weight 3)
   (stroke 10 95 0)
   (pop-matrix)(push-matrix)
-  (let [diam (* 0.95 (min (width) (height)))]
+  (let [width (:width (:bound entity))
+        diam (* 0.95 width)]
     (rotate (* (clj-time/day (clj-time.local/local-now)) (radians-for-this-month)))
-    (line  (* (height) (* 0.85 0.5))  0 (* (height) (* 0.95 0.5)) 0)
+    (line  (* width (* 0.85 0.5))  0 (* width (* 0.95 0.5)) 0)
     (rotate (- (radians-for-this-month)))
-    (line (* (height) (* 0.85 0.5))  0 (* (height) (* 0.95 0.5)) 0)
+    (line (* width (* 0.85 0.5))  0 (* width (* 0.95 0.5)) 0)
     (stroke-weight 5)
     (arc 0 0 diam diam 0 (radians-for-this-month))
     )
   (pop-style)
   (pop-matrix))
 
-(defn draw-polarclock [entity]
+(defn draw-timeclock [entity]
   (let [width (:width (:bound entity))
         diam  (* 0.8 width)
         tmdiam (* 0.7 width)
@@ -121,14 +123,19 @@
     (stroke-weight 5)
     (arc 0 0 tmdiam tmdiam (- gmtrad onerad) (+ gmtrad onerad))
 
-    (stroke 0 53 10)
+    (stroke 0 13 5)
     (stroke-weight 50)
     (arc 0 0 sdiam sdiam (- secrad PI) (+ secrad PI))
     (stroke-weight 90)
-    (stroke 0 50 10)
+    (stroke 0 0 0)
     (arc 0 0 sdiam sdiam (- secrad onerad) (+ secrad onerad))
 
     ))
 
+(defn draw-polarclock [entity]
+  (push-matrix)
+  (draw-timeclock entity)
+  (pop-matrix)
+  (draw-monthclock entity))
 
 
