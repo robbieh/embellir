@@ -1,6 +1,6 @@
 (ns embellir.doodles.weather
   (:gen-class)
-  (:use [embellir.illustrator :as illus]
+  (:use [embellir.illustrator :as illustrator]
         [embellir.curator :as curator]
         [quil.core])
   )
@@ -21,7 +21,21 @@
     ;(text-mode :model)
     ;(text-size 30)
     ;(text-align :center)
-      (text (:temp_f w) 0 0)))  
+    (text (:weather w) 0 0)
+    (translate 0 (+ (text-ascent) (text-descent)))
+    (text (:temp_f w) 0 0)
+    (translate 0 (+ (text-ascent) (text-descent)))
+    (text (:wind_dir w) 0 0)
+    (translate 0 (+ (text-ascent) (text-descent)))
+    (text (:wind_mph w) 0 0)
+    ))  
+
+(defn illustrate []
+  (println "foo")
+  (illustrator/create-entity "weather" 
+                             (position 300 300) 
+                             (bound 100 100) 
+                             (drawing embellir.doodles.weather/draw-weather)))
 
 
 

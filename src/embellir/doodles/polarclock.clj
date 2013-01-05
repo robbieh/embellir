@@ -1,9 +1,10 @@
 (ns embellir.doodles.polarclock
   (:gen-class)
   (:import (java.util Calendar Date))
-  (:require [clj-time.core :as clj-time]
-        [clj-time.local])
-  (:use      [quil.core])
+  (:require [embellir.illustrator :as illustrator]
+            [clj-time.core :as clj-time]
+            [clj-time.local])
+  (:use     [quil.core])
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -126,7 +127,7 @@
     (stroke 0 13 5)
     (stroke-weight 50)
     (arc 0 0 sdiam sdiam (- secrad PI) (+ secrad PI))
-    (stroke-weight 90)
+    (stroke-weight 60)
     (stroke 0 0 0)
     (arc 0 0 sdiam sdiam (- secrad onerad) (+ secrad onerad))
 
@@ -138,4 +139,6 @@
   (pop-matrix)
   (draw-monthclock entity))
 
+(defn illustrate []
+  (illustrator/create-entity "polarclock" (illustrator/position 0 0) (illustrator/bound 100 100 :round) (illustrator/drawing embellir.doodles.polarclock/draw-polarclock)))
 

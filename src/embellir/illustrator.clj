@@ -12,8 +12,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def entities "the entities in this component entity system" (atom []))
-(def layout)
+(defonce entities (atom []))
+
+(def current-layout)
 
 (defn now-long 
   "returns the current local time as a long"
@@ -26,7 +27,6 @@
   (foo 1 2 3) => {:name \"foo\" :bar 1 :baz 2 :boo 3)"
   [compname & compmap]
   ;TODO: check that compmap is all keywords
-  (future (layout))
   (intern *ns* (symbol compname) 
           (fn [& more] {(keyword compname) (zipmap compmap more)})))
 
@@ -237,12 +237,30 @@
   []
   )
 
+(defonce current-layout  (atom layout-tiled))
 
-(def layout "the current layout function" (atom layout-tiled))
+(defn relayout "possibly changes, then reapplies the current layout" 
+  ([]
+   (run-on-quil-thread #(@current-layout)))
+  ([layout-name]
+   (let [func (resolve (symbol "embellir.illustrator" layout-name))]
+     (when func (swap! current-layout (fn [_] func))))
+   (relayout))
+  )
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn load-entity [entname]
+  (let [fqi (str "embellir.doodles." entname)]
+;    (when-not (find-ns (symbol fqi))
+      (load-file (str "src/embellir/doodles/" entname ".clj"));)
+    (if (find-ns (symbol fqi))
+      (if-let [func (resolve (symbol fqi "illustrate"))] (func))
+      (println "could not find " entname)))
+  )
+
 
 (defn load-scheme
   "loads an initial set of entities"
@@ -261,10 +279,10 @@
   (frame-rate 1)
   (def bgcolor (color 0 0 0))
   ;  (load-scheme "default.emb")
-;  (create-entity "circle1" (drawing draw-circle))
-;  (create-entity "circle2" (drawing draw-circle))
-;  (create-entity "circle3" (drawing draw-circle))
-;  (create-entity "circle4" (drawing draw-circle))
+  ;  (create-entity "circle1" (drawing draw-circle))
+  ;  (create-entity "circle2" (drawing draw-circle))
+  ;  (create-entity "circle3" (drawing draw-circle))
+  ;  (create-entity "circle4" (drawing draw-circle))
   (layout-tiled)
   )
 
@@ -276,7 +294,7 @@
   (sys-draw)
   )
 
-(defn start-sketch []
+(defn start-illustrator []
   (defsketch illustrator
              :title "embellir"
              :size [600 500]

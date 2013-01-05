@@ -1,14 +1,23 @@
 (ns embellir.curator
   (:gen-class)
-  (:require [clojure.inspector :only atom?]
-      [clj-time.local]
+  (:require [clj-time.local]
             [clj-time.core]
             [clj-time.coerce])
   )
 
-(def collection 
-  "A map of 'curios' to be curated."
-  (atom {}))
+; collection is a map of maps
+; name is the main map key
+; :atom
+; :function
+; :time-to-live
+; :receiver-function TODO: need to add this to the curate function
+;
+; { "weather" {:atom <data for the curio>
+;              :function update-weather
+;              :time-to-live (* 1000 60 60)
+;              :receiver-function nil}
+;   "nowplaying" {...}}
+(defonce collection (atom {}))
 
 ;remember: .put .take .peek
 (def updateq-comparator (comparator (fn [a b] (clj-time.core/before? (:time a) (:time b)))))
@@ -23,30 +32,56 @@
                              (get-in @collection [itemname :time-to-live])
                              (clj-time.coerce/to-long (clj-time.local/local-now))))}))
 
+(defn get-curation-map [itemname]
+  "try to find function that looks like embellir.curios.<itemname>/curation-map"
+  "or else the fully-qualified function name, such as drh.datasupplier.curio/curation-map"
+  (let [fqi (str "embellir.curios." itemname)]
+;    (when-not (find-ns (symbol fqi))
+      (load-file (str "src/embellir/curios/" itemname ".clj"));)
+    (when (find-ns (symbol fqi))
+      (if-let [func (resolve (symbol fqi "curation-map"))] (func) (println "could not find" itemname)))))
+
 (defn curate 
   "Define an item that the curator will watch over:
   itemname - handy string holding a human-friendly item name
   itemdata - the data you wish to curate; if it is a function, curate the result of that fn
   function - a function the curator will use to update the item
-    note: swap! will be called on the itemdata and function
+  note: swap! will be called on the itemdata and function
   time-to-live - the curator will update the atom after this amount of time passes
-    note: milliseconds"
-  [itemname itemdata function time-to-live]
-  (assert (string? itemname))
-  (assert (fn? function))
-  (assert (> time-to-live 0))
-  (swap! collection #(assoc % itemname
-                            {:atom (atom itemdata)
-                             :function function
-                             :time-to-live time-to-live}))
-  (queue-item itemname))
+  note: milliseconds
+  function - a function called when the bit dock receives a map for this curio"
+  ([itemname]
+   (when-let [cmap (get-curation-map itemname)] (curate itemname cmap)))
+  ([itemname curation-map]
+   (swap! collection #(assoc % itemname curation-map)) 
+   (when-let [ttl (:time-to-live curation-map)] (queue-item itemname)))
+  ([itemname itemdata function time-to-live]
+   (curate itemname itemdata function time-to-live nil))
+  ([itemname itemdata function time-to-live receiver-function]
+   (assert (string? itemname))
+   (assert (or (fn? function) (nil? function)))
+   (assert (or (fn? receiver-function) (nil? receiver-function)))
+   (assert (or (nil? time-to-live) (> time-to-live 0)))
+   (swap! collection #(assoc % itemname
+                             {:atom (atom itemdata)
+                              :function function
+                              :time-to-live time-to-live
+                              :receiver-function receiver-function}))
+   (when time-to-live (queue-item itemname)))
+  )
 
 (defn get-curio [itemname]
   (let [curio (get @collection itemname)]
-    @(:atom curio)))
+    (when curio @(:atom curio))))
+
+(defn receive-data-for-curio [itemname datamap]
+  (let [item (get @collection itemname) 
+        itematom (:atom item)
+        itemfunc (:receiver-function item)]
+    (when itemfunc (swap! itematom itemfunc datamap))))
 
 (defn trash-curio [itemname]
-    (swap! collection #(dissoc % itemname)))
+  (swap! collection #(dissoc % itemname)))
 
 (defn list-curios [] (keys @collection))
 
@@ -62,15 +97,15 @@
   (loop [item (.take updateq)]
     ;    (println "found item: " item (get item :collection-key))
     (try
-    (let [itemtime (:time item)
-          itemtimelong (clj-time.coerce/to-long (:time item))
-          now (clj-time.coerce/to-long (clj-time.local/local-now))
-          timedifference (- itemtimelong now)] ;negative when item time is in the past
-      (if (< timedifference 0)
-        (do (run-item (get item :collection-key))
-          (queue-item (get item :collection-key)))
-        (do (Thread/sleep (min timedifference 1000))
-          (.put updateq item))))
+      (let [itemtime (:time item)
+            itemtimelong (clj-time.coerce/to-long (:time item))
+            now (clj-time.coerce/to-long (clj-time.local/local-now))
+            timedifference (- itemtimelong now)] ;negative when item time is in the past
+        (if (< timedifference 0)
+          (do (run-item (get item :collection-key))
+            (queue-item (get item :collection-key)))
+          (do (Thread/sleep (min timedifference 1000))
+            (.put updateq item))))
       (catch Exception e (str "Exception in manage-queue: " (.getMessage e))))
     (recur (.take updateq))))
 

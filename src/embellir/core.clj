@@ -1,17 +1,22 @@
 (ns embellir.core
   (:gen-class)
-  (:use [embellir.illustrator :as illus]
-        [embellir.curator :as curator]
-        [quil.core])
+  (:require [embellir.illustrator :as illustrator]
+            [embellir.curator :as curator]
+            [embellir.bitdock :as bitdock]
+            )
   )
 
 ; start the curator
-(.start (Thread. curator/manage-queue))
+(curator/start-curator)
 
-(defn start-illustration []
-  (embellir.illustrator/start-sketch))
+; start the bitdock
+(bitdock/start-bitdock)
+
 
 (defn -main
   [& args]
-  (start-illustration)
+  ;check for filename in args
+
+  ; start the illustrator
+  (illustrator/start-illustrator)
   )

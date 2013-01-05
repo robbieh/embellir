@@ -12,8 +12,6 @@
 ; :time-to-live (* 1000 60 30) ; half an hour
 ; :function update-weather }
 
-(defn print-foo [] (println "Foo"))
-
 (def nws-rss)
 
 (defn get-weather
@@ -32,8 +30,16 @@
   [wdata] 
   (merge wdata (get-weather)))
 
-;(defn curate-self []
-  
+(defn receive-weather
+  [wdata rmap]
+  (merge wdata rmap))
+
+(defn curation-map [] {:atom (atom (embellir.curios.weather/setup-weather))
+                       :function embellir.curios.weather/update-weather
+                       :time-to-live (* 1000 60 30)
+                       :receiver-function embellir.curios.weather/receive-weather})
+
+
 
 ; get-weather returns a map such as this:
 ; {:suggested_pickup "15 minutes after the hour",
