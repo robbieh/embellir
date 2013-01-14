@@ -18,6 +18,7 @@ embellir "scheme name"
 
 ## Schemes
 
+
 LAYOUT layout-tiled
 CURATE weather keyword keyword:trash ... 
 ILLUSTRATE polarclock keyword weather keyword:remove ...
@@ -25,11 +26,11 @@ SUPPLY keyword {:keyword "test" :text "this is a test\nmore test\nmore test"}
 
 ## Examples
 
+## Aspirations
 
 
 ### Bugs
 
 
-## License
 
 

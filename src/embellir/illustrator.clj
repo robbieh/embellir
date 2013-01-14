@@ -12,6 +12,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+;({:position {:y 250.0, :x 300.0},
+;  :bound {:height 500, :width 500},
+;  :drawing {:fn #<weather$draw_weather embellir.doodles.weather$draw_weather@3415ddf5>},
+;  :name "weather"})
+
 (defonce entities (atom []))
 
 (def current-layout)
@@ -192,11 +197,69 @@
 ;; the layout functions: see @layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn compare-entity-priority [a b]
+  (let [apri (:priority (:layout a))
+        bpri (:priority (:layout b))
+        both (and (not (nil? apri)) (not (nil? bpri)))
+        ax (not (nil? apri))
+        bx (not (nil? bpri))
+        ]
+    (println (:name a) apri (:name b) bpri )
+    (println both ax bx)
+    (cond 
+      both (compare apri bpri)
+      ax   -1
+      bx   1
+      :else  (compare (:name a) (:name b))
+      )))
+
+(defn prioritize-entities [ents]
+  (sort compare-entity-priority ents))
+
+(defn half [n] (* 0.5 n))
+
 (defn layout-major-central
   "Item with highest :layout :priority is maximized and centered.
   The rest are arranged in the available margin space. (not yet implemented)"
   []
-)
+  (when (not-empty @entities)
+    (let [prioritized-list (prioritize-entities @entities)
+          featured (first prioritized-list)
+          remainder (rest prioritized-list)
+          psize (min (width) (height))
+          minmargin (* 0.1 psize)
+          margin (max minmargin (abs (- (width) (height))))
+          halfmargin (half margin)
+          quartermargin (half halfmargin)
+] 
+      (println "width: " (width))
+      (println "height: " (height))
+      (println "psize: " psize)
+      (println "minmargin: " minmargin)
+      (println "margin: " margin)
+
+      (add-component-to-entity (:name featured) 
+                               (moveto (+ halfmargin (half psize))
+                                       (+ 0 (half psize))
+                                       (now-long) 
+                                       (+ 250 (now-long))))
+      (add-component-to-entity (:name featured) 
+                               (resize psize psize (now-long) (+ 250 (now-long))))
+     
+      (let [combined (interleave remainder (range))]
+      (doseq [[ent mult] (partition 2 combined)]
+        (add-component-to-entity (:name ent) 
+                                 (moveto (+ halfmargin (half halfmargin) psize) (+ (* mult halfmargin) quartermargin) (now-long) (+ 250 (now-long))))
+        (add-component-to-entity (:name ent) 
+                                 (resize halfmargin halfmargin (now-long) (+ 250 (now-long))))
+        ))
+
+    )
+
+  ;separate main item from the list, prioritize the rest
+  ;figure out how to fit them
+
+))
 
 (defn layout-tiled
   "Create a grid and assign each entity to a cell."
@@ -300,7 +363,6 @@
              :size [600 500]
              :setup setup
              :draw draw))
-
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; throw-away functions ... please remove! ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
