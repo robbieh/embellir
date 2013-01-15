@@ -31,4 +31,5 @@
 
   ; start the illustrator
   (illustrator/start-illustrator)
+  nil
   )

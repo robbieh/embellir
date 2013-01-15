@@ -64,11 +64,12 @@
               "curate" curate
               "illustrate" illustrate})
 (defn handle-command [line]
-  (let [[cmd remainder] (str/split line #" " 2)]
-    (if-let [func (get cmd-map (str/lower-case cmd))] 
-      (func remainder)
-      (str "Did not understand how to handle '" cmd "'")
-      )))
+  (when-not (= \ (first (str/trim line)))
+    (let [[cmd remainder] (str/split line #" " 2)]
+      (if-let [func (get cmd-map (str/lower-case cmd))] 
+        (func remainder)
+        (str "Did not understand how to handle '" cmd "'")
+        ))))
 
 (defn handle-stream [in out]
   (binding [*in*  (BufferedReader. (InputStreamReader. in))
