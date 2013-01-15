@@ -1,11 +1,35 @@
 (ns embellir.core
   (:gen-class)
-
+  (:import [java.io File])
+  (:require [embellir.illustrator :as illustrator]
+            [embellir.curator :as curator]
+            [embellir.bitdock :as bitdock]
+            [clojure.java.io :as io]
+            )
   )
 
 
+(defn read-config-file [filename]
+  (with-open [rd (io/reader filename)]
+    (doseq [line (line-seq rd)]
+      (bitdock/handle-command line)))
+  (illustrator/relayout))
 
-(defn -main
-  "I don't do a whole lot ... yet."
-  [& args]
-  (println "Hello, World!"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+; start the curator
+(curator/start-curator)
+
+; start the bitdock
+(bitdock/start-bitdock)
+
+
+(defn -main [& args]
+  (when (.exists (File. (first args)))
+    (read-config-file (first args)))
+
+  ; start the illustrator
+  (illustrator/start-illustrator)
+  nil
+  )

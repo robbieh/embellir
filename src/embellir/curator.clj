@@ -1,17 +1,23 @@
 (ns embellir.curator
   (:gen-class)
-  (:require [clojure.inspector :only atom?]
-      [clj-time.local]
+  (:require [clj-time.local]
             [clj-time.core]
             [clj-time.coerce])
   )
 
-;a map of 'items' - key is ascending integer
-;items should be a map holding :name :function :atom :time-to-live
-(def collection 
-  "A map of 'items' to be curated. Keys are :0 :1 :2 ... etc 
-  The items should hold :name :function :atom :time-to-live"
-  (atom {}))
+; collection is a map of maps
+; name is the main map key
+; :atom
+; :function
+; :time-to-live
+; :receiver-function TODO: need to add this to the curate function
+;
+; { "weather" {:atom <data for the curio>
+;              :function update-weather
+;              :time-to-live (* 1000 60 60)
+;              :receiver-function nil}
+;   "nowplaying" {...}}
+(defonce collection (atom {}))
 
 ;remember: .put .take .peek
 (def updateq-comparator (comparator (fn [a b] (clj-time.core/before? (:time a) (:time b)))))
@@ -19,89 +25,89 @@
   "A list of maps with :time to be executed and :collection-key of item to be executed"
   (java.util.concurrent.PriorityBlockingQueue. 5 updateq-comparator))
 
-;should this look for the highest key?
-;should the key be UUIDs instead?
-(defn next-collection-key 
-  "Return the next key to be used in the @collection map as an int"
-;  [] (-> @collection count str keyword))
-    [] (count @collection))
-
-(defn queue-item [item-id]
-  (let [item-keyword (-> item-id str keyword )]
-    (.put updateq {:collection-key item-id 
+(defn queue-item [itemname]
+    (.put updateq {:collection-key itemname
                    :time (clj-time.coerce/to-date-time
                            (+ 
-                             (-> @collection item-keyword :time-to-live)
-                             (clj-time.coerce/to-long (clj-time.local/local-now) )))})))
+                             (get-in @collection [itemname :time-to-live])
+                             (clj-time.coerce/to-long (clj-time.local/local-now))))}))
+
+(defn get-curation-map [itemname]
+  "try to find function that looks like embellir.curios.<itemname>/curation-map"
+  "or else the fully-qualified function name, such as drh.datasupplier.curio/curation-map"
+  (let [fqi (str "embellir.curios." itemname)]
+;    (when-not (find-ns (symbol fqi))
+      (load-file (str "src/embellir/curios/" itemname ".clj"));)
+    (when (find-ns (symbol fqi))
+      (if-let [func (resolve (symbol fqi "curation-map"))] (func) (println "could not find" itemname)))))
 
 (defn curate 
   "Define an item that the curator will watch over:
   itemname - handy string holding a human-friendly item name
-  itemdata - the data you wish to curate
+  itemdata - the data you wish to curate; if it is a function, curate the result of that fn
   function - a function the curator will use to update the item
-    note: swap! will be called on the itemdata and function
+  note: swap! will be called on the itemdata and function
   time-to-live - the curator will update the atom after this amount of time passes
-    note: milliseconds"
-  [itemname itemdata function time-to-live]
-  (assert (string? itemname))
-;  (assert (clojure.inspector/atom? atomx))
-  (assert (fn? function))
-  (assert (> time-to-live 0))
-  (let [itemkey (next-collection-key)]
-    (swap! collection #(assoc % (-> itemkey str keyword) 
-                            {:name itemname
-                             :atom (atom itemdata)
-                             :function function
-                             :time-to-live time-to-live}))
-       (queue-item itemkey)))
+  note: milliseconds
+  function - a function called when the bit dock receives a map for this curio"
+  ([itemname]
+   (when-let [cmap (get-curation-map itemname)] (curate itemname cmap)))
+  ([itemname curation-map]
+   (swap! collection #(assoc % itemname curation-map)) 
+   (when-let [ttl (:time-to-live curation-map)] (queue-item itemname)))
+  ([itemname itemdata function time-to-live]
+   (curate itemname itemdata function time-to-live nil))
+  ([itemname itemdata function time-to-live receiver-function]
+   (assert (string? itemname))
+   (assert (or (fn? function) (nil? function)))
+   (assert (or (fn? receiver-function) (nil? receiver-function)))
+   (assert (or (nil? time-to-live) (> time-to-live 0)))
+   (swap! collection #(assoc % itemname
+                             {:atom (atom itemdata)
+                              :function function
+                              :time-to-live time-to-live
+                              :receiver-function receiver-function}))
+   (when time-to-live (queue-item itemname)))
+  )
 
-(defn get-itemid-by-name
-  "Searches for an item ID by :name"
-  []
-  ())
+(defn get-curio [itemname]
+  (let [curio (get @collection itemname)]
+    (when curio @(:atom curio))))
 
+(defn receive-data-for-curio [itemname datamap]
+  (let [item (get @collection itemname) 
+        itematom (:atom item)
+        itemfunc (:receiver-function item)]
+    (when itemfunc (swap! itematom itemfunc datamap))))
 
-;finds the item 
-(defn run-item [item-id]
+(defn trash-curio [itemname]
+  (swap! collection #(dissoc % itemname)))
+
+(defn list-curios [] (keys @collection))
+
+(defn run-item [itemname]
   "Fetch the item from @collection 
   Then apply the item's :function to the item's :atom"
-  (assert (>= item-id 0))
-  (assert (> (count @collection) item-id))
-;  (println "run-item: " item-id)
-  (let [item (get @collection (-> item-id str keyword))
+  (let [item (get @collection itemname)
         itematom (:atom item)
         itemfunc (:function item)]
-;        (println "run-item: " item itematom itemfunc)
     (swap! itematom itemfunc)))
 
 (defn manage-queue []
   (loop [item (.take updateq)]
-;    (println "found item: " item (get item :collection-key))
-    (let [itemtime (:time item)
-          itemtimelong (clj-time.coerce/to-long (:time item))
-          now (clj-time.coerce/to-long (clj-time.local/local-now))
-          timedifference (- itemtimelong now)] ;negative when item time is in the past
-      (if (< timedifference 0)
-        (do (run-item (get item :collection-key))
+    ;    (println "found item: " item (get item :collection-key))
+    (try
+      (let [itemtime (:time item)
+            itemtimelong (clj-time.coerce/to-long (:time item))
+            now (clj-time.coerce/to-long (clj-time.local/local-now))
+            timedifference (- itemtimelong now)] ;negative when item time is in the past
+        (if (< timedifference 0)
+          (do (run-item (get item :collection-key))
             (queue-item (get item :collection-key)))
-        (do (Thread/sleep (min timedifference 1000))
+          (do (Thread/sleep (min timedifference 1000))
             (.put updateq item))))
+      (catch Exception e (str "Exception in manage-queue: " (.getMessage e))))
     (recur (.take updateq))))
-
-
-
-;    (when (.peek updateq)
-;      (println "something is in the queue")
-;      (let [newitem (.peek updateq)
-;            newitemtime (:time newitem)
-;            newitemtimelong (clj-time.coerce/to-long (:time newitem))
-;            now (clj-time.coerce/to-long (clj-time.local/local-now))
-;            timedifference (- newitemtimelong now)]
-;        (println newitem newitemtime newitemtimelong now timedifference)
-;        (if (> timedifference 0) 
-;          (println "sleeping: " (min timedifference 1000))
-;          (Thread/sleep (min timedifference 10)))))
-;    (recur (.take updateq))))
 
 (defn start-curator []
   "Starts the curator in a separate thread"
