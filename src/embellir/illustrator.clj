@@ -1,16 +1,29 @@
 (ns embellir.illustrator
   (:gen-class)
-
-  (:require [clojure.java.io :as io]
+  (:import [javax.swing JFrame]
+           [java.awt Graphics]
+           [java.awt.image BufferedImage])
+  (:require 
+            [clojure.java.io :as io]
+            [clojure.math.numeric-tower :as math]
+            [seesaw :all]
             [clj-time.core]
             [clj-time.coerce]
             [clj-time.local])
-  (:use [quil.core])
+
   )
 
+(defn width [] 512)
+(defn height [] 384)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defprotocol illustration
+  (draw [] "draw")
+  (setup [] "setup")
+            )
+
+
+;━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+;
 
 ;({:position {:y 250.0, :x 300.0},
 ;  :bound {:height 500, :width 500},
@@ -79,21 +92,21 @@
           poscomp (:position entity)
           drawfn (:fn drawcomp)
           ]
-      (push-style) (push-matrix) 
-      (translate (:x poscomp) (:y poscomp))
+;      (push-style) (push-matrix) 
+;      (translate (:x poscomp) (:y poscomp))
       (try
         (drawfn entity)
         (catch Exception e (do (println "Removing this entity due to error: \n" entity
                                              "\n" (.printStackTrace e))
                              (remove-entity (:name entity)))
           ))
-      (pop-matrix) (pop-style)
+;      (pop-matrix) (pop-style)
       )))
 
 (defn pctpoint
   [p1 p2 pct]
-  (if (< p1 p2) (+ p1 (* (abs (- p1 p2)) pct))
-    (- p1 (* (abs (- p1 p2)) pct))))
+  (if (< p1 p2) (+ p1 (* (math/abs (- p1 p2)) pct))
+    (- p1 (* (math/abs (- p1 p2)) pct))))
 
 (defn move-linear 
   [startpt endpt pct]
@@ -104,7 +117,7 @@
 (defn sys-move
   "updates the :position of every entity which has a :moveto component"
   []
-  (if (< 0 (count (get-entities :moveto))) (frame-rate 120) (frame-rate 10))
+;  (if (< 0 (count (get-entities :moveto))) (frame-rate 120) (frame-rate 10))
   (doseq [entity (get-entities :moveto)]
     (let [entname (:name entity)
           mcomp (:moveto entity)
@@ -131,7 +144,7 @@
   "resizes the :bound component of every entity which has a :resize component"
   []
   (doseq [entity (get-entities :resize)]
-  (if (< 0 (count (get-entities :moveto))) (frame-rate 120) (frame-rate 10))
+;  (if (< 0 (count (get-entities :moveto))) (frame-rate 120) (frame-rate 10))
   (try
     (let [entname (:name entity)
           reszcomp (:resize entity)
@@ -228,7 +241,7 @@
           remainder (rest prioritized-list)
           psize (min (width) (height))
           minmargin (* 0.1 psize)
-          margin (max minmargin (abs (- (width) (height))))
+          margin (max minmargin (math/abs (- (width) (height))))
           halfmargin (half margin)
           quartermargin (half halfmargin)
 ] 
@@ -265,7 +278,7 @@
   "Create a grid and assign each entity to a cell."
   []
   (when (not-empty @entities)
-  (let [size ((comp ceil sqrt) (count @entities)) ;size of the grid - it's always square
+  (let [size ((comp math/ceil math/sqrt) (count @entities)) ;size of the grid - it's always square
         pxsize (min (width) (height)) ;size of the grid in pixels
         xpadding (* 0.5 (- (width) pxsize))
         ypadding (* 0.5 (- (height) pxsize))
@@ -336,41 +349,27 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn draw-circle)
-(defn setup []
-  (smooth)
-  (frame-rate 1)
-  (def bgcolor (color 0 0 0))
-  ;  (load-scheme "default.emb")
-  ;  (create-entity "circle1" (drawing draw-circle))
-  ;  (create-entity "circle2" (drawing draw-circle))
-  ;  (create-entity "circle3" (drawing draw-circle))
-  ;  (create-entity "circle4" (drawing draw-circle))
-  (layout-tiled)
-  )
 
 (defn draw []
-  (background bgcolor)
   (sys-runme)
   (sys-move)
   (sys-resize)
   (sys-draw)
   )
 
+  
 (defn start-illustrator []
-  (defsketch illustrator
-             :title "embellir"
-             :size [600 500]
-             :setup setup
-             :draw draw))
+
+  (frame 
+    ;:content (canvas :id :canvas :background "#FFFFFF" :paint draw)
+
+  ;if I just use Swing...
+  ;(def frame (JFrame. "embellir"))
+  ;(.setSize frame (width) (height))
+  ;(.setVisible frame true)
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; throw-away functions ... please remove! ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn draw-circle [e]
-  (stroke 255)
-  (fill bgcolor)
-  (let [width (get-in e [:bound :width])
-        height (get-in e [:bound :height])]
-    (ellipse 0 0 width height)))
