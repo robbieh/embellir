@@ -26,7 +26,7 @@
 
 
 (defn -main [& args]
-  (when (.exists (File. (first args)))
+  (when (.exists (File. ^String (first args)))
     (read-config-file (first args)))
 
   ; start the illustrator
