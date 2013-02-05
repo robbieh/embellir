@@ -41,6 +41,9 @@
 (defn minutes-to-radians [minutes]
   (radians (* 6 minutes)))
 
+(defn minutes-to-degrees [minutes]
+  (* 6 minutes))
+
 (defn radians-for-30d []
   (/ TWO-PI 30))
 
@@ -92,6 +95,7 @@
         hourrad  (hour-to-radians-12 (clj-time/hour (clj-time.local/local-now)))
         hourdeg  (hour-to-degrees-12 (clj-time/hour (clj-time.local/local-now)))
         secrad  (minutes-to-radians (clj-time/sec (clj-time.local/local-now)))
+        secdeg (minutes-to-degrees (clj-time/sec (clj-time.local/local-now)))
         onerad (radians 1)
         minofhourrad (/ stoprad 14)
         minofhourdeg (/ stopdeg 14) ; this is almost certainly wrong
@@ -128,7 +132,6 @@
 ;    (stroke 0 220 20)
 ;    (stroke-weight 3)
     (arc 0 0 diam diam 0 (+ minofhourdeg hourdeg) ) minstyle
-                )
 ;    (let []
 ;      (push-matrix)
 ;      (rotate (+ minofhourrad hourrad ))
@@ -153,7 +156,8 @@
 ;    (arc 0 0 sdiam sdiam (- secrad PI) (+ secrad PI))
 ;    (stroke-weight 60)
 ;    (stroke 0 0 0)
-;    (arc 0 0 sdiam sdiam (- secrad onerad) (+ secrad onerad))
+    (arc 0 0 sdiam sdiam (- secdeg 10 ) 20) minstyle
+                )
 ;
   )
  ))

@@ -108,11 +108,8 @@
       ;      (translate (:x poscomp) (:y poscomp))
       (try
         (drawfn entity g2d)
-        (.drawImage graphics2D,
-           ^java.awt.Image img,
-           ^Integer x,
-           ^Integer y,
-           nil)
+        (.drawImage graphics2D, ^java.awt.Image img, ^Integer x, ^Integer y, nil)
+        (repaint! canvas)
         (catch Exception e (do (println "Removing this entity due to error: \n" entity
                                         "\n" (.printStackTrace e))
                              (remove-entity (:name entity)))
