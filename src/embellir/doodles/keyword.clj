@@ -1,17 +1,25 @@
 (ns embellir.doodles.keyword
   (:gen-class)
-  (:require [embellir.illustrator :as illustrator])
-  (:use      [quil.core]))
+  (:import (java.util Calendar Date)
+          (java.awt Graphics2D RenderingHints)
+          (java.awt.image BufferedImage))
+    (:require [embellir.illustrator :as illustrator]
+            [clj-time.core :as clj-time]
+            [clj-time.local])
+    (:use     seesaw.graphics
+            seesaw.color)
+    )
 
-(defn binary-size-search [size sizemin text fitwidth]
-  (if (>= sizemin size) 
-    size
-    (do 
-      (text-size size)
-      (let [twidth (text-width text)] ;caluclate text's actual width for this size
-        (if (>= twidth fitwidth)
-          (recur (/ size 2) sizemin text fitwidth)
-          size)))))
+
+;(defn binary-size-search [size sizemin text fitwidth]
+;  (if (>= sizemin size) 
+;    size
+;    (do 
+;      (text-size size)
+;      (let [twidth (text-width text)] ;caluclate text's actual width for this size
+;        (if (>= twidth fitwidth)
+;          (recur (/ size 2) sizemin text fitwidth)
+;          size)))))
 
 
 (defn calc-header-size
@@ -25,7 +33,7 @@
   )
 
 
-(defn draw-keyword [entity]
+(defn draw-keyword [entity ^java.awt.Graphics2D graphics2D]
   (let [width (:width (:bound entity))
         height (:height (:bound entity))
         hawidth (* 0.5 height)
@@ -33,26 +41,24 @@
         curio (embellir.curator/get-curio "keyword")
         headertext (str (:keyword curio))
         bodytext (str (:text curio))
-        headertextsize (binary-size-search 100 8 headertext width)
+        ;headertextsize (binary-size-search 100 8 headertext width)
+        headertextsize 10
         textsize 10
         ]
-    (stroke 255 0 255)
-    (stroke-weight 10)
-    (text-align :center)
-    (text-mode :model)
-    (translate 0 (+ (- haheight) (text-ascent) ))
-    (text-size headertextsize)
-    (text headertext 0 0)
-    (translate 0 (text-descent))
-    (text-size textsize)
-    (translate 0 (text-ascent))
-    (translate (- hawidth) 0)
-    (text-align :left)
-    (text bodytext 0 0)
+    (.setColor graphics2D (to-color "#C8FFC8"))
+    (.drawString graphics2D headertext 5 10)
+    (.drawString graphics2D bodytext 5 30)
     ))
 
 (defn illustrate []
-  (illustrator/create-entity "keyword" (illustrator/position 300 300) (illustrator/bound 100 100) (illustrator/drawing embellir.doodles.keyword/draw-keyword)))
+  (let [bi (java.awt.image.BufferedImage. (illustrator/scrwidth) (illustrator/scrheight) java.awt.image.BufferedImage/TYPE_INT_ARGB)
+        gr (.createGraphics bi)]
+    (doto gr (.setRenderingHint RenderingHints/KEY_ANTIALIASING RenderingHints/VALUE_ANTIALIAS_ON))
 
-  
+    (illustrator/create-entity "keyword" 
+                 (illustrator/position 0 0)
+                 (illustrator/bound (illustrator/scrwidth) (illustrator/scrheight) :round)
+                 (illustrator/drawing embellir.doodles.keyword/draw-keyword bi gr ))))
+
+
 

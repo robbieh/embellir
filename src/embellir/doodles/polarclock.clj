@@ -1,7 +1,7 @@
 (ns embellir.doodles.polarclock
   (:gen-class)
   (:import (java.util Calendar Date)
-     (java.awt Graphics2D)
+     (java.awt Graphics2D RenderingHints)
      (java.awt.image BufferedImage))
   (:require [embellir.illustrator :as illustrator]
      [clj-time.core :as clj-time]
@@ -168,6 +168,7 @@
 (defn illustrate []
   (let [bi (java.awt.image.BufferedImage. (illustrator/scrwidth) (illustrator/scrheight) java.awt.image.BufferedImage/TYPE_INT_ARGB)
         gr (.createGraphics bi)]
+    (doto gr (.setRenderingHint RenderingHints/KEY_ANTIALIASING RenderingHints/VALUE_ANTIALIAS_ON))
     (illustrator/create-entity "polarclock" 
                  (illustrator/position 0 0) 
                  (illustrator/bound (illustrator/scrwidth) (illustrator/scrheight) :round) 
