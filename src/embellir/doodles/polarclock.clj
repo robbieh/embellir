@@ -1,11 +1,13 @@
 (ns embellir.doodles.polarclock
   (:gen-class)
-  (:import (java.util Calendar Date))
+  (:import (java.util Calendar Date)
+     (java.awt Graphics2D)
+     (java.awt.image BufferedImage))
   (:require [embellir.illustrator :as illustrator]
-            [clj-time.core :as clj-time]
-            [clj-time.local])
+     [clj-time.core :as clj-time]
+     [clj-time.local])
   (:use     seesaw.graphics
-            seesaw.color)
+     seesaw.color)
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -46,7 +48,7 @@
   (Calendar/getInstance))
 
 (defn radians-for-this-month []
-  (/ TWO-PI (.getActualMaximum (calNow) Calendar/DAY_OF_MONTH)))
+  (/ TWO-PI (.getActualMaximum ^java.util.Calendar (calNow) Calendar/DAY_OF_MONTH)))
 
 ;(defn draw-monthclock [entity]
 ;  ;  (rotate (- PI))
@@ -77,7 +79,7 @@
 ;  (pop-matrix))
 
 (defn draw-timeclock 
-  [entity ^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
+  [entity ^java.awt.Graphics2D graphics2D]
   (let [width (:width (:bound entity))
         diam  (* 0.8 width)
         tmdiam (* 0.7 width)
@@ -156,13 +158,19 @@
   )
  ))
 
-(defn draw-polarclock [entity ^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
+(defn draw-polarclock [entity ^java.awt.Graphics2D graphics2D]
 ;  (push-matrix)
-  (draw-timeclock entity canvas graphics2D)
+  (draw-timeclock entity graphics2D)
 ;  (pop-matrix)
  ; (draw-monthclock entity)
   )
 
 (defn illustrate []
-  (illustrator/create-entity "polarclock" (illustrator/position 0 0) (illustrator/bound 100 100 :round) (illustrator/drawing embellir.doodles.polarclock/draw-polarclock)))
+  (let [bi (java.awt.image.BufferedImage. (illustrator/scrwidth) (illustrator/scrheight) java.awt.image.BufferedImage/TYPE_INT_ARGB)
+        gr (.createGraphics bi)]
+    (illustrator/create-entity "polarclock" 
+                 (illustrator/position 0 0) 
+                 (illustrator/bound (illustrator/scrwidth) (illustrator/scrheight) :round) 
+                 (illustrator/drawing embellir.doodles.polarclock/draw-polarclock bi gr)
+                 )))
 

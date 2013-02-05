@@ -85,6 +85,11 @@
   [component]
   (filter #(contains? % component) @entities))
 
+;(defn add-g2d-to-entity
+;  "Adds an empty java.awt.Graphics2D object to an entity with a draw component"
+;  [entity]
+;  
+;  )
 
 (defn sys-draw
   "draws everything with a draw component, using the :fn from it"
@@ -93,12 +98,21 @@
   (doseq [entity (get-entities :drawing)]
     (let [drawcomp (:drawing entity)
           poscomp (:position entity)
+          x (:x poscomp)
+          y (:y poscomp)
           drawfn (:fn drawcomp)
+          g2d (:g2d drawcomp)
+          img (:image drawcomp)
           ]
       ;      (push-style) (push-matrix) 
       ;      (translate (:x poscomp) (:y poscomp))
       (try
-        (drawfn entity canvas graphics2D)
+        (drawfn entity g2d)
+        (.drawImage graphics2D,
+           ^java.awt.Image img,
+           ^Integer x,
+           ^Integer y,
+           nil)
         (catch Exception e (do (println "Removing this entity due to error: \n" entity
                                         "\n" (.printStackTrace e))
                              (remove-entity (:name entity)))
@@ -193,7 +207,7 @@
 ;standard components
 (create-component "position" :x :y :r)
 (create-component "bound" :width :height :shape :more)
-(create-component "drawing" :fn)
+(create-component "drawing" :fn :image :g2d)
 (create-component "moveto" :endx :endy :starttime :endtime :rate-fn)
 (create-component "spin" :endrad :starttime :endtime :rate-fn)
 (create-component "resize" :endwidth :endheight :starttime :endtime :rate-fn)
