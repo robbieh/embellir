@@ -1,6 +1,15 @@
 (ns embellir.doodles.text
   (:gen-class)
-  (:use      [quil.core]))
+  (:import (java.util Calendar Date)
+               (java.awt Graphics2D RenderingHints)
+               (java.awt.image BufferedImage))
+      (:require [embellir.illustrator :as illustrator]
+                     [clj-time.core :as clj-time]
+                     [clj-time.local])
+             (:use     seesaw.graphics
+                            seesaw.color)
+                    )
+
 
 (defn draw-text [entity]
   (let [width (:width (:bound entity))
@@ -8,12 +17,7 @@
         hawidth (* 0.5 height)
         haheight (* 0.5 width)
         ]
-    (stroke 255 0 255)
-    (stroke-weight 10)
-    (text-size 30)
-    (text-align :center)
-    (text-mode :model)
-    (text "test" 0 0)))
-
-  
+    (.setColor graphics2D (to-color "#C8FFC8"))
+      (.drawString graphics2D "Test" 5 10)
+)) 
 

@@ -17,6 +17,7 @@
 ;              :time-to-live (* 1000 60 60)
 ;              :receiver-function nil}
 ;   "nowplaying" {...}}
+;   
 (defonce collection (atom {}))
 
 ;remember: .put .take .peek
@@ -94,7 +95,7 @@
     (swap! itematom itemfunc)))
 
 (defn manage-queue []
-  (loop [item (.take updateq)]
+  (loop [item (.take ^java.util.concurrent.PriorityBlockingQueue updateq)]
     ;    (println "found item: " item (get item :collection-key))
     (try
       (let [itemtime (:time item)
@@ -107,7 +108,7 @@
           (do (Thread/sleep (min timedifference 1000))
             (.put updateq item))))
       (catch Exception e (str "Exception in manage-queue: " (.getMessage e))))
-    (recur (.take updateq))))
+    (recur (.take ^java.util.concurrent.PriorityBlockingQueue updateq))))
 
 (defn start-curator []
   "Starts the curator in a separate thread"

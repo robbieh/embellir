@@ -1,16 +1,32 @@
 (ns embellir.illustrator
   (:gen-class)
+    (:import [java.awt RenderingHints])
+       ; [javax.swing JFrame]
+  ;           [java.awt Graphics]
+  ;           [java.awt.image BufferedImage])
+  (:require 
+     [clojure.java.io :as io]
+     [clojure.math.numeric-tower :as math]
+     [seesaw.core :as seesaw]
+     [clj-time.core]
+     [clj-time.coerce]
+     [clj-time.local])
+  (:use seesaw.core
+     seesaw.graphics
+     seesaw.color)
 
-  (:require [clojure.java.io :as io]
-            [clj-time.core]
-            [clj-time.coerce]
-            [clj-time.local])
-  (:use [quil.core])
   )
 
+(defn scrwidth [] 512)
+(defn scrheight [] 384)
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;(defprotocol illustration
+;  (illustrate [_] "illustrate")
+;  )
+
+
+;━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+;
 
 ;({:position {:y 250.0, :x 300.0},
 ;  :bound {:height 500, :width 500},
@@ -39,13 +55,13 @@
   "adds or replaces the component for the matching entity"
   [entityname, component]
   (swap! entities 
-         #(map (fn merge-if [e] (if (= (:name e) entityname) (merge e component) e)) % )))
+        #(map (fn merge-if [e] (if (= (:name e) entityname) (merge e component) e)) % )))
 
 (defn remove-component-from-entity
   "removes the compnent (which must be a keyword) from the matching entity"
   [entityname, componentkey]
   (swap! entities 
-         #(map (fn dissoc-if [e] (if (= (:name e) entityname) (dissoc e componentkey) e)) % )))
+        #(map (fn dissoc-if [e] (if (= (:name e) entityname) (dissoc e componentkey) e)) % )))
 
 (defn create-entity
   "creates an entity with the specified components
@@ -69,31 +85,42 @@
   [component]
   (filter #(contains? % component) @entities))
 
+;(defn add-g2d-to-entity
+;  "Adds an empty java.awt.Graphics2D object to an entity with a draw component"
+;  [entity]
+;  
+;  )
 
 (defn sys-draw
   "draws everything with a draw component, using the :fn from it"
-  []
+  [^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
   ;  (println (get-entities :draw))
   (doseq [entity (get-entities :drawing)]
     (let [drawcomp (:drawing entity)
           poscomp (:position entity)
+          x (:x poscomp)
+          y (:y poscomp)
           drawfn (:fn drawcomp)
+          g2d (:g2d drawcomp)
+          img (:image drawcomp)
           ]
-      (push-style) (push-matrix) 
-      (translate (:x poscomp) (:y poscomp))
+      ;      (push-style) (push-matrix) 
+      ;      (translate (:x poscomp) (:y poscomp))
       (try
-        (drawfn entity)
+        (drawfn entity g2d)
+        (.drawImage graphics2D, ^java.awt.Image img, ^Integer x, ^Integer y, nil)
+        (repaint! canvas)
         (catch Exception e (do (println "Removing this entity due to error: \n" entity
-                                             "\n" (.printStackTrace e))
+                                        "\n" (.printStackTrace e))
                              (remove-entity (:name entity)))
           ))
-      (pop-matrix) (pop-style)
+      ;      (pop-matrix) (pop-style)
       )))
 
 (defn pctpoint
   [p1 p2 pct]
-  (if (< p1 p2) (+ p1 (* (abs (- p1 p2)) pct))
-    (- p1 (* (abs (- p1 p2)) pct))))
+  (if (< p1 p2) (+ p1 (* (math/abs (- p1 p2)) pct))
+    (- p1 (* (math/abs (- p1 p2)) pct))))
 
 (defn move-linear 
   [startpt endpt pct]
@@ -104,7 +131,7 @@
 (defn sys-move
   "updates the :position of every entity which has a :moveto component"
   []
-  (if (< 0 (count (get-entities :moveto))) (frame-rate 120) (frame-rate 10))
+  ;  (if (< 0 (count (get-entities :moveto))) (frame-rate 120) (frame-rate 10))
   (doseq [entity (get-entities :moveto)]
     (let [entname (:name entity)
           mcomp (:moveto entity)
@@ -131,35 +158,35 @@
   "resizes the :bound component of every entity which has a :resize component"
   []
   (doseq [entity (get-entities :resize)]
-  (if (< 0 (count (get-entities :moveto))) (frame-rate 120) (frame-rate 10))
-  (try
-    (let [entname (:name entity)
-          reszcomp (:resize entity)
-          bcomp (:bound entity)
-          starttime (:starttime reszcomp)
-          endtime (:endtime reszcomp)
-          now (now-long)
-          nnow (- now starttime) ;'normalized' now
-          timediff (- endtime starttime)
-          timepct (min 1 (/ nnow timediff)) ;what percentage of time has passed
-          startdmsn (if (:startwidth reszcomp) (select-keys reszcomp [:startheight :startwidth])
-                      (let [newreszcomp (assoc reszcomp :startwidth (:width bcomp) :startheight (:height bcomp))]
-                        (add-component-to-entity entname {:resize newreszcomp})
-                        (select-keys newreszcomp [:startwidth :startheight])))
-          enddmsn (select-keys reszcomp [:endwidth :endheight])
-          diffdmsn  {:width (- (:endwidth enddmsn) (:startwidth startdmsn))
-                     :height (- (:endheight enddmsn) (:startheight startdmsn))}
-          pctdmsn {:width (* timepct (:width diffdmsn)) :height (* timepct (:height diffdmsn))}
-          newbound (merge bcomp {:width (+ (:width pctdmsn) (:startwidth startdmsn)) 
-                                 :height (+ (:height pctdmsn) (:startheight startdmsn))})
-          ]
-      (if (= 1 timepct) (remove-component-from-entity entname :resize))
-      (add-component-to-entity entname {:bound newbound})
-      )
+    ;  (if (< 0 (count (get-entities :moveto))) (frame-rate 120) (frame-rate 10))
+    (try
+      (let [entname (:name entity)
+            reszcomp (:resize entity)
+            bcomp (:bound entity)
+            starttime (:starttime reszcomp)
+            endtime (:endtime reszcomp)
+            now (now-long)
+            nnow (- now starttime) ;'normalized' now
+            timediff (- endtime starttime)
+            timepct (min 1 (/ nnow timediff)) ;what percentage of time has passed
+            startdmsn (if (:startwidth reszcomp) (select-keys reszcomp [:startheight :startwidth])
+                        (let [newreszcomp (assoc reszcomp :startwidth (:width bcomp) :startheight (:height bcomp))]
+                          (add-component-to-entity entname {:resize newreszcomp})
+                          (select-keys newreszcomp [:startwidth :startheight])))
+            enddmsn (select-keys reszcomp [:endwidth :endheight])
+            diffdmsn  {:width (- (:endwidth enddmsn) (:startwidth startdmsn))
+                       :height (- (:endheight enddmsn) (:startheight startdmsn))}
+            pctdmsn {:width (* timepct (:width diffdmsn)) :height (* timepct (:height diffdmsn))}
+            newbound (merge bcomp {:width (+ (:width pctdmsn) (:startwidth startdmsn)) 
+                                   :height (+ (:height pctdmsn) (:startheight startdmsn))})
+            ]
+        (if (= 1 timepct) (remove-component-from-entity entname :resize))
+        (add-component-to-entity entname {:bound newbound})
+        )
       (catch Exception e (do (println "Removing this resize from this entity due to error: \n" entity
-                                             "\n" (.printStackTrace e))
-                             (remove-component-from-entity (:name entity) :resize)))
-    )))
+                                      "\n" (.printStackTrace e))
+                           (remove-component-from-entity (:name entity) :resize)))
+      )))
 
 (defn sys-runme
   "runs the functions specified by :runme components"
@@ -177,7 +204,7 @@
 ;standard components
 (create-component "position" :x :y :r)
 (create-component "bound" :width :height :shape :more)
-(create-component "drawing" :fn)
+(create-component "drawing" :fn :image :g2d)
 (create-component "moveto" :endx :endy :starttime :endtime :rate-fn)
 (create-component "spin" :endrad :starttime :endtime :rate-fn)
 (create-component "resize" :endwidth :endheight :starttime :endtime :rate-fn)
@@ -186,10 +213,10 @@
 (create-component "minimized" :status)
 (create-component "layout" :priority :needs-attention)
 (create-component "runme" :fn)
-(defn run-on-quil-thread
-  "keeps a function which will be run once on the Quil drawing thread, and then discarded.
-  This allows the function to run with proper Quil bindings. Works like this:
-  (run-on-quil-thread #(println (width) (height)))"
+(defn run-on-ui-thread
+  "keeps a function which will be run once on the UI drawing thread, and then discarded.
+  This allows the function to run with proper UI bindings. Works like this:
+  (run-on-ui-thread #(println (width) (height)))"
   [func]
   (create-entity "runme function" (runme #(func))))
 
@@ -226,74 +253,74 @@
     (let [prioritized-list (prioritize-entities @entities)
           featured (first prioritized-list)
           remainder (rest prioritized-list)
-          psize (min (width) (height))
+          psize (min (scrwidth) (scrheight))
           minmargin (* 0.1 psize)
-          margin (max minmargin (abs (- (width) (height))))
+          margin (max minmargin (math/abs (- (scrwidth) (scrheight))))
           halfmargin (half margin)
           quartermargin (half halfmargin)
-] 
-      (println "width: " (width))
-      (println "height: " (height))
+          ] 
+      (println "width: " (scrwidth))
+      (println "height: " (scrheight))
       (println "psize: " psize)
       (println "minmargin: " minmargin)
       (println "margin: " margin)
 
       (add-component-to-entity (:name featured) 
-                               (moveto (+ halfmargin (half psize))
-                                       (+ 0 (half psize))
-                                       (now-long) 
-                                       (+ 250 (now-long))))
+           (moveto (+ halfmargin (half psize))
+                   (+ 0 (half psize))
+                   (now-long) 
+                   (+ 250 (now-long))))
       (add-component-to-entity (:name featured) 
-                               (resize psize psize (now-long) (+ 250 (now-long))))
-     
+           (resize psize psize (now-long) (+ 250 (now-long))))
+
       (let [combined (interleave remainder (range))]
-      (doseq [[ent mult] (partition 2 combined)]
-        (add-component-to-entity (:name ent) 
-                                 (moveto (+ halfmargin (half halfmargin) psize) (+ (* mult halfmargin) quartermargin) (now-long) (+ 250 (now-long))))
-        (add-component-to-entity (:name ent) 
-                                 (resize halfmargin halfmargin (now-long) (+ 250 (now-long))))
-        ))
+        (doseq [[ent mult] (partition 2 combined)]
+          (add-component-to-entity (:name ent) 
+               (moveto (+ halfmargin (half halfmargin) psize) (+ (* mult halfmargin) quartermargin) (now-long) (+ 250 (now-long))))
+          (add-component-to-entity (:name ent) 
+               (resize halfmargin halfmargin (now-long) (+ 250 (now-long))))
+          ))
 
-    )
+      )
 
-  ;separate main item from the list, prioritize the rest
-  ;figure out how to fit them
+    ;separate main item from the list, prioritize the rest
+    ;figure out how to fit them
 
-))
+    ))
 
 (defn layout-tiled
   "Create a grid and assign each entity to a cell."
   []
   (when (not-empty @entities)
-  (let [size ((comp ceil sqrt) (count @entities)) ;size of the grid - it's always square
-        pxsize (min (width) (height)) ;size of the grid in pixels
-        xpadding (* 0.5 (- (width) pxsize))
-        ypadding (* 0.5 (- (height) pxsize))
-        blocksize (/ pxsize size)
-        gridy (flatten (repeat size (range size)))
-        gridx (sort gridy)
-        gridpairs (for [x gridx] (vec (for [y gridy] [x y])))
-        adjustx (fn adjust [i] (+ (* 0.5 blocksize) (* blocksize i) xpadding))
-        adjusty (fn adjust [i] (+ (* 0.5 blocksize) (* blocksize i) ypadding))
-        ; gridpxcenters (map #(+ (* 0.5 blocksize) (* blocksize %)) (range size))
-        entnames (map #(:name %) (get-entities :drawing))
-        biglist (interleave entnames (map adjustx gridx) (map adjusty gridy))
-        ]
-;        (println size gridy gridx entnames)
-;        (println (map adjust gridx))
-;        (println biglist)
-    (loop [items biglist]
-      (let [head (take 3 items)
-            tail (drop 3 items)
-            [entname x y] head
-            ent (get-entity-by-name entname)
-            poscomp (:position ent)
-            bcomp (:bound ent)]
-        (add-component-to-entity entname (moveto x y (now-long) (+ 250 (now-long))))
-;        (add-component-to-entity entname {:position (assoc poscomp :x x :y y)})
-        (add-component-to-entity entname (resize blocksize blocksize (now-long) (+ 250 (now-long))))
-;        (add-component-to-entity entname {:bound (assoc bcomp :width blocksize :height blocksize)})
-        (when (not-empty tail) (recur tail)))))))
+    (let [size ((comp math/ceil math/sqrt) (count @entities)) ;size of the grid - it's always square
+          pxsize (min (scrwidth) (scrheight)) ;size of the grid in pixels
+          xpadding (* 0.5 (- (scrwidth) pxsize))
+          ypadding (* 0.5 (- (scrheight) pxsize))
+          blocksize (/ pxsize size)
+          gridy (flatten (repeat size (range size)))
+          gridx (sort gridy)
+          gridpairs (for [x gridx] (vec (for [y gridy] [x y])))
+          adjustx (fn adjust [i] (+ (* 0.5 blocksize) (* blocksize i) xpadding))
+          adjusty (fn adjust [i] (+ (* 0.5 blocksize) (* blocksize i) ypadding))
+          ; gridpxcenters (map #(+ (* 0.5 blocksize) (* blocksize %)) (range size))
+          entnames (map #(:name %) (get-entities :drawing))
+          biglist (interleave entnames (map adjustx gridx) (map adjusty gridy))
+          ]
+      ;        (println size gridy gridx entnames)
+      ;        (println (map adjust gridx))
+      ;        (println biglist)
+      (loop [items biglist]
+        (let [head (take 3 items)
+              tail (drop 3 items)
+              [entname x y] head
+              ent (get-entity-by-name entname)
+              poscomp (:position ent)
+              bcomp (:bound ent)]
+          (add-component-to-entity entname (moveto x y (now-long) (+ 250 (now-long))))
+          ;        (add-component-to-entity entname {:position (assoc poscomp :x x :y y)})
+          (add-component-to-entity entname (resize blocksize blocksize (now-long) (+ 250 (now-long))))
+          ;        (add-component-to-entity entname {:bound (assoc bcomp :width blocksize :height blocksize)})
+          (when (not-empty tail) (recur tail)))))))
 
 (defn layout-spring
   "treat entities as if connected by springs (not yet implemented)"
@@ -304,7 +331,7 @@
 
 (defn relayout "possibly changes, then reapplies the current layout" 
   ([]
-   (run-on-quil-thread #(@current-layout)))
+   (run-on-ui-thread #(@current-layout)))
   ([layout-name]
    (let [func (resolve (symbol "embellir.illustrator" layout-name))]
      (when func (swap! current-layout (fn [_] func))))
@@ -317,8 +344,8 @@
 
 (defn load-entity [entname]
   (let [fqi (str "embellir.doodles." entname)]
-;    (when-not (find-ns (symbol fqi))
-      (load-file (str "src/embellir/doodles/" entname ".clj"));)
+    ;    (when-not (find-ns (symbol fqi))
+    (load-file (str "src/embellir/doodles/" entname ".clj"));)
     (if (find-ns (symbol fqi))
       (if-let [func (resolve (symbol fqi "illustrate"))] (func))
       (println "could not find " entname)))
@@ -336,41 +363,34 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn draw-circle)
-(defn setup []
-  (smooth)
-  (frame-rate 1)
-  (def bgcolor (color 0 0 0))
-  ;  (load-scheme "default.emb")
-  ;  (create-entity "circle1" (drawing draw-circle))
-  ;  (create-entity "circle2" (drawing draw-circle))
-  ;  (create-entity "circle3" (drawing draw-circle))
-  ;  (create-entity "circle4" (drawing draw-circle))
-  (layout-tiled)
-  )
 
-(defn draw []
-  (background bgcolor)
+(defn drawloop [^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
   (sys-runme)
   (sys-move)
   (sys-resize)
-  (sys-draw)
+  (sys-draw canvas graphics2D)
   )
 
+
 (defn start-illustrator []
-  (defsketch illustrator
-             :title "embellir"
-             :size [600 500]
-             :setup setup
-             :draw draw))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; throw-away functions ... please remove! ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  (def c (seesaw/canvas :paint drawloop :background "#000000"))
+    (def f (seesaw/frame :title "embellir"
+                       :width (scrwidth)
+                   :height (scrheight)
+                              :content c
+                       ))
+    (seesaw/pack! f)
+    (seesaw/show! f)
+    ;:content (canvas :id :canvas :background "#FFFFFF" :paint draw)
 
-(defn draw-circle [e]
-  (stroke 255)
-  (fill bgcolor)
-  (let [width (get-in e [:bound :width])
-        height (get-in e [:bound :height])]
-    (ellipse 0 0 width height)))
+    ;if I just use Swing...
+    ;(def frame (JFrame. "embellir"))
+    ;(.setSize frame (width) (height))
+    ;(.setVisible frame true)
+    )
+
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;; throw-away functions ... please remove! ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
