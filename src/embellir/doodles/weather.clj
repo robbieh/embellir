@@ -1,8 +1,13 @@
 (ns embellir.doodles.weather
   (:gen-class)
-  (:use [embellir.illustrator :as illustrator]
-        [embellir.curator :as curator]
-        [quil.core])
+  (:import (java.util Calendar Date)
+     (java.awt Graphics2D RenderingHints)
+     (java.awt.image BufferedImage))
+  (:require [embellir.illustrator :as illustrator]
+     [clj-time.core :as clj-time]
+     [clj-time.local])
+  (:use     seesaw.graphics
+     seesaw.color)
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -21,21 +26,29 @@
     ;(text-mode :model)
     ;(text-size 30)
     ;(text-align :center)
-    (text (:weather w) 0 0)
-    (translate 0 (+ (text-ascent) (text-descent)))
-    (text (:temp_f w) 0 0)
-    (translate 0 (+ (text-ascent) (text-descent)))
-    (text (:wind_dir w) 0 0)
-    (translate 0 (+ (text-ascent) (text-descent)))
-    (text (:wind_mph w) 0 0)
+    (.setColor graphics2D (to-color "#C8FFC8"))
+
+    (.drawString graphics2D  (:weather w) 0 0)
+    ;    (translate 0 (+ (text-ascent) (text-descent)))
+    (.drawString graphics2D  (:temp_f w) 0 20)
+    ;    (translate 0 (+ (text-ascent) (text-descent)))
+    (.drawString graphics2D  (:wind_dir w) 0 30)
+    ;    (translate 0 (+ (text-ascent) (text-descent)))
+    (.drawString graphics2D  (:wind_mph w) 0 40)
     ))  
 
 (defn illustrate []
   (println "foo")
-  (illustrator/create-entity "weather" 
-                             (position 300 300) 
-                             (bound 100 100) 
-                             (drawing embellir.doodles.weather/draw-weather)))
+  (let [bi (java.awt.image.BufferedImage. (illustrator/scrwidth) (illustrator/scrheight) java.awt.image.BufferedImage/TYPE_INT_ARGB)
+        gr (.createGraphics bi)]
+    (doto gr (.setRenderingHint RenderingHints/KEY_ANTIALIASING RenderingHints/VALUE_ANTIALIAS_ON))
 
+
+    (illustrator/create-entity "weather" 
+                 (illustrator/position 0 0)
+                 (illustrator/bound (illustrator/scrwidth) (illustrator/scrheight) :round)
+
+                 (drawing embellir.doodles.weather/draw-weather bi gr)))
+  )
 
 

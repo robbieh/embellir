@@ -213,10 +213,10 @@
 (create-component "minimized" :status)
 (create-component "layout" :priority :needs-attention)
 (create-component "runme" :fn)
-(defn run-on-quil-thread
-  "keeps a function which will be run once on the Quil drawing thread, and then discarded.
-  This allows the function to run with proper Quil bindings. Works like this:
-  (run-on-quil-thread #(println (width) (height)))"
+(defn run-on-ui-thread
+  "keeps a function which will be run once on the UI drawing thread, and then discarded.
+  This allows the function to run with proper UI bindings. Works like this:
+  (run-on-ui-thread #(println (width) (height)))"
   [func]
   (create-entity "runme function" (runme #(func))))
 
@@ -331,7 +331,7 @@
 
 (defn relayout "possibly changes, then reapplies the current layout" 
   ([]
-   (run-on-quil-thread #(@current-layout)))
+   (run-on-ui-thread #(@current-layout)))
   ([layout-name]
    (let [func (resolve (symbol "embellir.illustrator" layout-name))]
      (when func (swap! current-layout (fn [_] func))))
