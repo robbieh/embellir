@@ -102,31 +102,24 @@
         ;minofhourrad (/ stoprad 14)
         minofhourdeg (/ (* stopdeg 6) 15) 
         hrstroke (stroke :width 2)
-        minstroke (stroke :width 5)
+        hrstroke2 (stroke :width 3)
+        minstroke1 (stroke :width 20)
+        minstroke2 (stroke :width 16)
         hrstyle (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke hrstroke )
-        minstyle (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke minstroke )
-        tmpstyle (style :foreground (color 200 220 20) :background (color 10 10 10 0) :stroke minstroke )
-        tmpstyle2 (style :foreground (color 200 220 200) :background (color 10 10 10 0) :stroke minstroke )
+        hrstyle2 (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke hrstroke )
+        minstyle (style :foreground (color 0 90 0) :background (color 10 10 10 0) :stroke hrstroke2 )
+        minstyle1 (style :foreground (color 0 90 0) :background (color 10 10 10 0) :stroke minstroke1 )
+        minstyle2 (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke minstroke2 )
         ]
     (push graphics2D 
           (translate graphics2D center center)
           (draw graphics2D
-                (line -200 -200 200 200) tmpstyle
-                (line 200 -200 -200 200) tmpstyle
-                (iarc 0 0 tmdiam tmdiam 0 45) tmpstyle2
-                (iarc 0 0 tmdiam tmdiam 0 10) tmpstyle
         ;        (iarc 0 0 tmdiam tmdiam 0 -90) tmpstyle2
 ;                (arc 0 0 tmdiam tmdiam 0 270) tmpstyle
 
       ; an hour-size mark for the hour
-      ;old(stroke 50 200 95)
-      ;(stroke 0 220 20)
-;      (stroke-weight 3)
-      ;(no-fill)
-      ;(arc 0 0 tmdiam tmdiam hourrad (+ hourrad (radians 30)) java.awt.geom.Arc2D/OPEN) hrstyle; 30 because 12h clock!
                 
       (iarc 0 0 tmdiam tmdiam hourdeg 30) hrstyle; 30 because 12h clock!
-;;      (arc 0 0 tmdiam tmdiam hourdeg 30) hrstyle; 30 because 12h clock!
 
       ;   ;this shows 'hour markers' for a 24h clock
       ;    (doseq [x (range 0 23)]
@@ -136,13 +129,12 @@
 
       ; and an extra minute-dot on the hour...
       ; with a line out to the minutes ring
-;      (stroke-weight 5)
-     (iarc 0 0 tmdiam tmdiam (+ hourdeg minofhourdeg -0.01) 0.01 ) minstyle
+     (iarc 0 0 tmdiam tmdiam (+ hourdeg minofhourdeg -0.01) 0.01 ) hrstyle2
 
     ; the minutes ; drawn in two parts
 ;    (stroke 0 220 20)
 ;    (stroke-weight 3)
-;;    (iarc 0 0 diam diam 0 (+ minofhourdeg hourdeg) ) minstyle
+   (iarc 0 0 diam diam 0 (+ minofhourdeg hourdeg) ) minstyle
 ;    (let []
 ;      (push-matrix)
 ;      (rotate (+ minofhourrad hourrad ))
@@ -152,10 +144,10 @@
 ;
 ;    (stroke 0 90 0)
 ;    (stroke-weight 20)
-;    (arc 0 0 diam diam 0 stoprad)
+    (iarc 0 0 diam diam 0 stopdeg) minstyle1
 ;    (stroke 0 220 20)
 ;    (stroke-weight 16)
-;    (arc 0 0 diam diam 0 stoprad)
+    (iarc 0 0 diam diam 0 stopdeg) minstyle2
 ;
 ;    ; let's see... red 'dot' on the GMT hour
 ;    (stroke 250 25 25)
