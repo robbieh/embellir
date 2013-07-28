@@ -25,7 +25,7 @@
 (bitdock/start-bitdock)
 
 
-(defn -main [& args]
+(defn main [& args]
   (when (.exists (File. ^String (first args)))
     (read-config-file (first args)))
 
@@ -33,3 +33,5 @@
   (illustrator/start-illustrator)
   nil
   )
+
+

@@ -84,15 +84,18 @@
 
 (defn draw-timeclock 
   [entity ^java.awt.Graphics2D graphics2D]
-  (let [width (:width (:bound entity)) ;yes, this assumes the boundary is squared :(
-        center (* 0.5 width)
-        diam  (* 0.8 width)
-        tmdiam (* 0.7 width)
-        sdiam (* 0.5 width)
+  (let [width (:width (:bound entity)) 
+        height (:height (:bound entity))
+        size (min height width)
+        centerx (* 0.5 width)
+        centery (* 0.5 height)
+        diam  (* 0.8 size)
+        tmdiam (* 0.7 size)
+        sdiam (* 0.5 size)
         x     (:x (:position entity))
         y     (:y (:position entity))
         ;stoprad  (minutes-to-radians (clj-time/minute (clj-time/now)))
-        stopdeg  (clj-time/minute (clj-time/now))
+        stopdeg  (minutes-to-degrees (clj-time/minute (clj-time/now)))
         ;gmtrad  (hour-to-radians (clj-time/hour (clj-time/now)))
         ;hourrad  (hour-to-radians-12 (clj-time/hour (clj-time.local/local-now)))
         hourdeg  (hour-to-degrees-12 (clj-time/hour (clj-time.local/local-now)))
@@ -100,7 +103,7 @@
         secdeg (minutes-to-degrees (clj-time/sec (clj-time.local/local-now)))
 ;       onerad (radians 1)
         ;minofhourrad (/ stoprad 14)
-        minofhourdeg (/ (* stopdeg 6) 15) 
+        minofhourdeg (/ stopdeg 15) 
         hrstroke (stroke :width 2)
         hrstroke2 (stroke :width 3)
         minstroke1 (stroke :width 20)
@@ -112,8 +115,9 @@
         minstyle2 (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke minstroke2 )
         ]
     (push graphics2D 
-          (translate graphics2D center center)
+          (translate graphics2D centerx centery)
           (draw graphics2D
+      
         ;        (iarc 0 0 tmdiam tmdiam 0 -90) tmpstyle2
 ;                (arc 0 0 tmdiam tmdiam 0 270) tmpstyle
 

@@ -381,6 +381,8 @@
                        ))
     (seesaw/pack! f)
     (seesaw/show! f)
+    ;(seesaw/move! :to [x y])
+  ;
     ;:content (canvas :id :canvas :background "#FFFFFF" :paint draw)
 
     ;if I just use Swing...
