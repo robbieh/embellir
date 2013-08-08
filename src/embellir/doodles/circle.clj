@@ -6,13 +6,20 @@
      seesaw.color
      ))
 
-(defn draw-circle [e ^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
-  (let [width (get-in e [:bound :width])
-        height (get-in e [:bound :height])]
-    (draw graphics2D
-      (ellipse 0 0 100 100) (style :foreground java.awt.Color/RED))
-  ))
+(defn draw-circle [d panel g2D]
+  (let [sizex (.getWidth panel)
+        sizey (.getHeight panel)
+        s (long (* d (mod 1000 (System/currentTimeMillis)) 0.01))
+        ] 
+        (draw g2D
+          (ellipse (/ 2 sizex) (/ 2 sizey) s s) (style :foreground java.awt.Color/RED )
+          (ellipse (/ 2 sizex) (/ 2 sizey) d d) (style :foreground java.awt.Color/BLUE )
+              
+              ) 
+    
+    )
+  )
 
-(defn illustrate []
-    (illustrator/create-entity "circle" (illustrator/position 0 0) (illustrator/bound 100 100 :round) (illustrator/drawing embellir.doodles.circle/draw-circle)))
-
+(defn mkcircle [r name]
+  (embellir.illustrator/create-an-entity (partial draw-circle r) 100 name)
+  )

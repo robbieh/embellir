@@ -1,24 +1,25 @@
 (ns embellir.illustrator
   (:gen-class)
-    (:import [java.awt RenderingHints])
-       ; [javax.swing JFrame]
+  (:import [java.awt RenderingHints]
+           [javax.swing JFrame JLabel JComponent] 
+           [java.awt BorderLayout]) 
   ;           [java.awt Graphics]
   ;           [java.awt.image BufferedImage])
   (:require 
-     [clojure.java.io :as io]
-     [clojure.math.numeric-tower :as math]
-     [seesaw.core :as seesaw]
-     [clj-time.core]
-     [clj-time.coerce]
-     [clj-time.local])
+    [clojure.java.io :as io]
+    [clojure.math.numeric-tower :as math]
+    [seesaw.core :as seesaw]
+    [clj-time.core]
+    [clj-time.coerce]
+    [clj-time.local])
   (:use seesaw.core
-     seesaw.graphics
-     seesaw.color)
+        seesaw.graphics
+        seesaw.color)
 
   )
 
-(defn scrwidth [] 512)
-(defn scrheight [] 384)
+(def scrwidth 512)
+(def scrheight 384)
 
 ;(defprotocol illustration
 ;  (illustrate [_] "illustrate")
@@ -55,13 +56,13 @@
   "adds or replaces the component for the matching entity"
   [entityname, component]
   (swap! entities 
-        #(map (fn merge-if [e] (if (= (:name e) entityname) (merge e component) e)) % )))
+         #(map (fn merge-if [e] (if (= (:name e) entityname) (merge e component) e)) % )))
 
 (defn remove-component-from-entity
   "removes the compnent (which must be a keyword) from the matching entity"
   [entityname, componentkey]
   (swap! entities 
-        #(map (fn dissoc-if [e] (if (= (:name e) entityname) (dissoc e componentkey) e)) % )))
+         #(map (fn dissoc-if [e] (if (= (:name e) entityname) (dissoc e componentkey) e)) % )))
 
 (defn create-entity
   "creates an entity with the specified components
@@ -265,19 +266,19 @@
       (println "margin: " margin)
 
       (add-component-to-entity (:name featured) 
-           (moveto (+ halfmargin (half psize))
-                   (+ 0 (half psize))
-                   (now-long) 
-                   (+ 250 (now-long))))
+                               (moveto (+ halfmargin (half psize))
+                                       (+ 0 (half psize))
+                                       (now-long) 
+                                       (+ 250 (now-long))))
       (add-component-to-entity (:name featured) 
-           (resize psize psize (now-long) (+ 250 (now-long))))
+                               (resize psize psize (now-long) (+ 250 (now-long))))
 
       (let [combined (interleave remainder (range))]
         (doseq [[ent mult] (partition 2 combined)]
           (add-component-to-entity (:name ent) 
-               (moveto (+ halfmargin (half halfmargin) psize) (+ (* mult halfmargin) quartermargin) (now-long) (+ 250 (now-long))))
+                                   (moveto (+ halfmargin (half halfmargin) psize) (+ (* mult halfmargin) quartermargin) (now-long) (+ 250 (now-long))))
           (add-component-to-entity (:name ent) 
-               (resize halfmargin halfmargin (now-long) (+ 250 (now-long))))
+                                   (resize halfmargin halfmargin (now-long) (+ 250 (now-long))))
           ))
 
       )
@@ -370,28 +371,48 @@
   (sys-draw canvas graphics2D)
   )
 
+(comment  (defn mkcomponent []
+  (let [ component (proxy [JComponent ] []
+                    (paint [g2d] (.drawLine g2d 0 0 100 100)  )
+                    )
+        ])
+  )) 
+
+(defn create-an-entity [drawfn freq name]
+  (let [c (seesaw/canvas :paint drawfn :bounds [10 100 50 50])
+        t (Thread. (fn [] 
+                     (while true
+                       (repaint! c)
+                       (Thread/sleep (long (/ 1000 freq)) ) 
+                       ) 
+
+                     ))
+        ]
+    (.start t)
+    c
+    )
+  
+  )
+
+(def xyz (seesaw/xyz-panel))
 
 (defn start-illustrator []
-
-  (def c (seesaw/canvas :paint drawloop :background "#000000"))
-    (def f (seesaw/frame :title "embellir"
-                       :width (scrwidth)
-                   :height (scrheight)
-                              :content c
-                       ))
-    (seesaw/pack! f)
-    (seesaw/show! f)
-    ;(seesaw/move! :to [x y])
-  ;
-    ;:content (canvas :id :canvas :background "#FFFFFF" :paint draw)
-
-    ;if I just use Swing...
-    ;(def frame (JFrame. "embellir"))
-    ;(.setSize frame (width) (height))
-    ;(.setVisible frame true)
+  (let [
+;        bp (border-panel :center (embellir.doodles.circle/mkcircle 12 "circle1") )
+        f (seesaw/frame :title "foo" :width 500 :height 500 :content xyz :visible? true)]
     )
 
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;; throw-away functions ... please remove! ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;if I just use Swing...
+;  (let [ frame (JFrame. "embellir")]
+;
+;    (.setLayout frame (BorderLayout. )) 
+;    (.setSize frame 500 500) 
+;    (.setVisible frame true)
+;    (.add frame (mkcomponent) BorderLayout/CENTER) 
+;    ) 
+)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; throw-away functions ... please remove! ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
