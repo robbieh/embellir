@@ -14,4 +14,7 @@
                            ]
             ;  :profiles {:dev {:dependencies [[clj-ns-browser "1.3.0"]]}}
             :warn-on-reflection true
-            :main embellir.core)
+            :main embellir.core
+           :user  {:repl-options  {:timeout 120000}} 
+
+            )

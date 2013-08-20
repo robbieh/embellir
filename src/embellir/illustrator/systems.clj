@@ -1,10 +1,50 @@
-(ns embellir.illustrator.components
+(ns embellir.illustrator.systems
   (:gen-class)
   (:require 
-    [embellir.illustrator :as illustrator] 
-            
-            )
+    [clojure.java.io :as io]
+    [clojure.math.numeric-tower :as math]
+    [seesaw.core :as seesaw]
+    [clj-time.core]
+    [clj-time.coerce]
+    [clj-time.local])
+
+    (:use embellir.illustrator.entities 
+          embellir.illustrator.components)
   )
+
+(def scrwidth 512)
+(def scrheight 384)
+
+(def current-layout)
+
+(defn half [n] (* 0.5 n))
+
+(defn now-long
+  "returns the current local time as a long"
+  [] (clj-time.coerce/to-long (clj-time.local/local-now)))
+
+(defn pctpoint
+  [p1 p2 pct]
+  (if (< p1 p2) (+ p1 (* (math/abs (- p1 p2)) pct))
+    (- p1 (* (math/abs (- p1 p2)) pct))))
+
+(defn move-linear 
+  [startpt endpt pct]
+  (let [x (pctpoint (:x startpt) (:x endpt) pct)
+        y (pctpoint (:y startpt) (:y endpt) pct) ]
+    {:x x :y y}))
+
+
+(defn pctpoint
+  [p1 p2 pct]
+  (if (< p1 p2) (+ p1 (* (math/abs (- p1 p2)) pct))
+    (- p1 (* (math/abs (- p1 p2)) pct))))
+
+(defn move-linear 
+  [startpt endpt pct]
+  (let [x (pctpoint (:x startpt) (:x endpt) pct)
+        y (pctpoint (:y startpt) (:y endpt) pct) ]
+    {:x x :y y}))
 
 (defn sys-draw
   "draws everything with a draw component, using the :fn from it"
@@ -101,6 +141,13 @@
       (remove-entity entname)
       (runfn))))
 
+(defn run-on-ui-thread
+  "keeps a function which will be run once on the UI drawing thread, and then discarded.
+  This allows the function to run with proper UI bindings. Works like this:
+  (run-on-ui-thread #(println (width) (height)))"
+  [func]
+  (create-entity "runme function" (runme #(func))))
+
 (defn layout-tiled
   "Create a grid and assign each entity to a cell."
   []
@@ -193,3 +240,60 @@
     ;figure out how to fit them
 
     ))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; the layout functions: see @layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+
+
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(defn load-entity [entname]
+  (let [fqi (str "embellir.doodles." entname)]
+    ;    (when-not (find-ns (symbol fqi))
+    (load-file (str "src/embellir/doodles/" entname ".clj"));)
+    (if (find-ns (symbol fqi))
+    ;; TODO  and I should get the return value and call create-entity
+      (if-let [func (resolve (symbol fqi "new-doodle"))] (func))
+      (println "could not find " entname)))
+  )
+
+
+(defn load-scheme
+  "loads an initial set of entities"
+  [filename]
+  (with-open [rd (io/reader filename)]
+    (doseq [line (line-seq rd)]
+      (println line))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn drawloop [^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
+  ;; would be great if core.async only ran these when the corresponding components are available.
+  (sys-runme)
+  (sys-move)
+  (sys-resize)
+
+  ;TODO: this isn't right. shouldn't it call (repaint!) on entities which need it?
+  ;;maybe it should be sys-repaint
+  (sys-draw canvas graphics2D) 
+  ;;or maybe there should be a component to draw at a rate separate from one to draw from a queue...
+  (do (Thread/sleep (1000)))
+  (drawloop)
+  )
+
+(defn create-doodle-canvas [drawfn]
+  ;; TODO: this should be SMART and figure out where to place something new 
+  (let [c (seesaw/canvas :paint drawfn :bounds [10 100 50 50]) ]
+    c))
+
+

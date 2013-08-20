@@ -13,7 +13,7 @@
   (with-open [rd (io/reader filename)]
     (doseq [line (line-seq rd)]
       (bitdock/handle-command line)))
-  (illustrator/relayout))
+  (embellir.illustrator.systems/relayout))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
