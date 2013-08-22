@@ -19,7 +19,7 @@
   (let [
 ;        bp (border-panel :center (embellir.doodles.circle/mkcircle 12 "circle1") )
         xyz (seesaw/xyz-panel)
-        f (seesaw/frame :title "foo" :width 500 :height 500 :content xyz :visible? true) 
+        f (seesaw/frame :title "foo" :width 500 :height 500 :content xyz :visible? true :background :black) 
         ]
         (seesaw-xyz-panel xyz) ;;   Assign the xyz to the component seesaw-panel
                                                      ;;so that everything can find it in the @entities

@@ -291,7 +291,7 @@
   (drawloop)
   )
 
-(defn create-doodle-canvas [drawfn]
+(defn create-doodle-canvas [drawfn ]
   ;; TODO: this should be SMART and figure out where to place something new 
   (let [c (seesaw/canvas :paint drawfn :bounds [10 100 50 50]) ]
     c))

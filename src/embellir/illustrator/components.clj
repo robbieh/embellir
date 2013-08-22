@@ -17,6 +17,7 @@
 ;standard components
 (create-component "seesaw-xyz-panel" :xyz-panel )
 (create-component "seesaw-canvas" :canvas )
+(create-component "fps-draw" :rate )
 (create-component "moveto" :endx :endy :starttime :endtime :rate-fn)
 ;(create-component "spin" :endrad :starttime :endtime :rate-fn)
 (create-component "resize" :endwidth :endheight :starttime :endtime :rate-fn)
