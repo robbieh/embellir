@@ -46,24 +46,18 @@
         y (pctpoint (:y startpt) (:y endpt) pct) ]
     {:x x :y y}))
 
-(defn sys-draw
+(defn sys-draw []
   "draws everything with a draw component, using the :fn from it"
-  [^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
+  ;[^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
   ;  (println (get-entities :draw))
-  (doseq [entity (get-entities :drawing)]
-    (let [drawcomp (:drawing entity)
-          poscomp (:position entity)
-          x (:x poscomp)
-          y (:y poscomp)
-          drawfn (:fn drawcomp)
-          g2d (:g2d drawcomp)
-          img (:image drawcomp)
+  (doseq [entity (get-entities :fps-draw)]
+    (let [canvas (:canvas (:seesaw-canvas entity))
           ]
       ;      (push-style) (push-matrix) 
       ;      (translate (:x poscomp) (:y poscomp))
       (try
-        (drawfn entity g2d)
-        (.drawImage graphics2D, ^java.awt.Image img, ^Integer x, ^Integer y, nil)
+;        (do (println "Canvas:" canvas))
+        (seesaw/repaint! canvas) 
         (catch Exception e (do (println "Removing this entity due to error: \n" entity
                                         "\n" (.printStackTrace e))
                              (remove-entity (:name entity)))
@@ -254,13 +248,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(defn load-entity [entname]
+(defn load-entity [entname identifier]
   (let [fqi (str "embellir.doodles." entname)]
     ;    (when-not (find-ns (symbol fqi))
     (load-file (str "src/embellir/doodles/" entname ".clj"));)
     (if (find-ns (symbol fqi))
     ;; TODO  and I should get the return value and call create-entity
-      (if-let [func (resolve (symbol fqi "new-doodle"))] (func))
+      (if-let [func (resolve (symbol fqi "new-doodle"))] (func identifier))
       (println "could not find " entname)))
   )
 
@@ -277,7 +271,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 
-(defn drawloop [^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics2D]
+(defn sysloop []
+  (comment do (println "tick"))
   ;; would be great if core.async only ran these when the corresponding components are available.
   (sys-runme)
   (sys-move)
@@ -285,15 +280,27 @@
 
   ;TODO: this isn't right. shouldn't it call (repaint!) on entities which need it?
   ;;maybe it should be sys-repaint
-  (sys-draw canvas graphics2D) 
+  (sys-draw)
   ;;or maybe there should be a component to draw at a rate separate from one to draw from a queue...
-  (do (Thread/sleep (1000)))
-  (drawloop)
+  (do (Thread/sleep 1000))
+  (sysloop)
   )
 
 (defn create-doodle-canvas [drawfn ]
   ;; TODO: this should be SMART and figure out where to place something new 
   (let [c (seesaw/canvas :paint drawfn :bounds [10 100 50 50]) ]
-    c))
+;  (println "created canvas: " c)
+    (doseq [entity (get-entities :seesaw-xyz-panel)]
+      (let [xyz-panel (:xyz-panel (:seesaw-xyz-panel entity))
+            items (:items xyz-panel)
+            ]
+;  (println "items " items)
+        (seesaw/config! xyz-panel :items (conj items c))
+;  (println "added canvas: " xyz-panel)
+        )
+
+      )
+    c)
+  )
 
 

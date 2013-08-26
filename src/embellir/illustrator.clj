@@ -19,14 +19,15 @@
   (let [
 ;        bp (border-panel :center (embellir.doodles.circle/mkcircle 12 "circle1") )
         xyz (seesaw/xyz-panel)
-        f (seesaw/frame :title "foo" :width 500 :height 500 :content xyz :visible? true :background :black) 
+        f (seesaw/frame :title "foo" :width 500 :height 500 :content xyz :visible? true ) 
         ]
-        (seesaw-xyz-panel xyz) ;;   Assign the xyz to the component seesaw-panel
-                                                     ;;so that everything can find it in the @entities
+        (create-entity "xyz-panel" (seesaw-xyz-panel xyz))
+         ;;   Assign the xyz to a new entity with component seesaw-panel
+         ;;   so that everything can find it in the @entities
     )
 
-  (.start (Thread. drawloop))
   ;;TODO need a thread that manages the SYSTEMS, or calls drawlooop over and over
+  (.start (Thread. sysloop))
 
 ;if I just use Swing...
 ;  (let [ frame (JFrame. "embellir")]
