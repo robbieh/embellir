@@ -286,9 +286,12 @@
   (sysloop)
   )
 
-(defn create-doodle-canvas [drawfn ]
+(defn create-doodle-canvas [drawfn & ]
   ;; TODO: this should be SMART and figure out where to place something new 
-  (let [c (seesaw/canvas :paint drawfn :bounds [10 100 50 50]) ]
+  (let [xyz (get-in (first  @entities) [:seesaw-xyz-panel :xyz-panel])
+        w (seesaw/width xyz)
+        h (seesaw/height xyz)
+        c (seesaw/canvas :paint drawfn :opaque? false :bounds [0 0 w h]) ]
 ;  (println "created canvas: " c)
     (doseq [entity (get-entities :seesaw-xyz-panel)]
       (let [xyz-panel (:xyz-panel (:seesaw-xyz-panel entity))

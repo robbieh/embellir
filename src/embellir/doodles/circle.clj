@@ -3,7 +3,11 @@
   (:use 
     seesaw.graphics
     seesaw.color
-    ))
+    )
+  (:require 
+     [clj-time.core :as clj-time]
+     [clj-time.local]) 
+  )
 
 (def private-data (atom {}))
 
@@ -11,10 +15,12 @@
   (let [sizex (.getWidth canvas)
         sizey (.getHeight canvas)
         ;d (:diameter @private-data)
-        d 100
-        s (long (* d (mod (System/currentTimeMillis) 1000 ) 0.01))
+        d (min sizex sizey) 
+        pct (/ (mod (clj-time/sec (clj-time.local/local-now)) 60 ) 60 ) 
+        s (* d pct)
         ] 
 ;    (do (println "draw-doodle" sizex sizey d s))
+    (do (println "draw-doodle sizex,y" sizex sizey "diam" d "seconds%" pct "seconds size" s))
     (push graphics (draw graphics
                 (ellipse (/ 2 sizex) (/ 2 sizey) s s) (style :foreground java.awt.Color/RED ) 
                 (ellipse (/ 2 sizex) (/ 2 sizey) d d) (style :foreground java.awt.Color/BLUE)

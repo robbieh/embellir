@@ -2,7 +2,7 @@
   (:gen-class)
   )
 
-(defonce entities (atom []))
+(defonce entities (atom {}))
 
 (defn create-entity
   "creates an entity with the specified components

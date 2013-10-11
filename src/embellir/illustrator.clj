@@ -18,8 +18,8 @@
 (defn start-illustrator []
   (let [
 ;        bp (border-panel :center (embellir.doodles.circle/mkcircle 12 "circle1") )
-        xyz (seesaw/xyz-panel)
-        f (seesaw/frame :title "foo" :width 500 :height 500 :content xyz :visible? true ) 
+        xyz (seesaw/xyz-panel :background "#FFF")
+        f (seesaw/frame :title "embellir" :width 500 :height 500 :content xyz :visible? true ) 
         ]
         (create-entity "xyz-panel" (seesaw-xyz-panel xyz))
          ;;   Assign the xyz to a new entity with component seesaw-panel
