@@ -13,7 +13,6 @@
     [clj-time.coerce]
     [clojure.string :as str]
     [embellir.curator :as curator]
-    [embellir.illustrator :as illustrator]
     [server.socket]
     )
   )
@@ -44,8 +43,8 @@
 
 (defn layout [data] 
   (if data 
-    (illustrator/relayout data)
-    (illustrator/relayout)))
+    (embellir.illustrator.systems/relayout data)
+    (embellir.illustrator.systems/relayout)))
 
 (defn curate [data]
   (doseq [item (str/split data #" ")]
@@ -56,7 +55,7 @@
 (defn illustrate [data]
   (doseq [item (str/split data #" ")]
     (println "illustrating: " item)
-    (illustrator/load-entity item))
+    (embellir.illustrator.systems/load-entity item))
   )
 
 (def cmd-map { "supply" supply
