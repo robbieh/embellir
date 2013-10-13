@@ -29,7 +29,7 @@
     )
   )
 
-(defn new-doodle [identifier]
+(comment defn new-doodle [identifier]
   (let [canvas  (embellir.illustrator.systems/create-doodle-canvas draw-doodle )
                  
         ]

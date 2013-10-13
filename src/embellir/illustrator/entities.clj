@@ -1,59 +1,70 @@
 (ns embellir.illustrator.entities
-  (:gen-class)
+;  (:gen-class)
+  (:import  [java.awt.image BufferedImage]
+     
+     )
+  (:use seesaw.core
+     seesaw.graphics
+     seesaw.color
+     )
   )
+
+; entities is a map of maps
+; name is the main map key
+; map should contain a minimum of :function and :peroid, or a :threadfn
+; :function - fn to update g2d object, or nil if entity handles its own thread
+; :period   - how many ms between updates?
+; :threadfn - fn that will be run in a thread
+; :frame    - the image object
+;
+; { "circle" {:function embellir.doodles.circle/draw-circle
+;             :period 1000
+;             }
+;   "clock"  {...}}
+;   
 
 (defonce entities (atom {}))
 
-(defn create-entity
-  "creates an entity with the specified components
-  e.g. (create-entity \"foo\" (position 0 0) (drawing foo-draw-fn))"
-  [entname & entcomps]
-  (let [entmap (apply merge entcomps)]
-    (swap! entities #(conj % (conj {:name entname} entmap)))))
 
-(defn remove-entity
-  "removes entity with the given name"
-  [entname]
-  (swap! entities #(remove (fn match-name [entity] (= (:name entity) entname)) %)))
+; (def img1 (buffered-image 100 100))
+;
+; (-> @entities (assoc "test" {:this "that"}))     
+; (swap! e #(-> % (assoc "test" {:frame img1})))
+;
+; (assoc-in @e ["test" :x] 1)
+; (swap! e assoc-in ["test" :x] 1)
+;
 
-(defn get-entity-by-name
-  [nm]
-  (filter (fn match-name [entity] (= (:name entity) nm)) @entities))
+; (find @e "test")            ; ["test" {:frame #<BufferedImage BufferedImage@3fec3fed: ... >}]
+; (get-in @e ["test" :frame]) ; returns the actual BufferedImage
 
-(defn get-entities 
-  "returns all entities with the requested component
-  e.g. (get-entites :position)"
-  [component]
-  (filter #(contains? % component) @entities))
+; (map :frame (vals @e))      ; returns a list with all the images
 
-(defn add-component-to-entity
-  "adds or replaces the component for the matching entity"
-  [entityname, component]
-  (swap! entities 
-         #(map (fn merge-if [e] (if (= (:name e) entityname) (merge e component) e)) % )))
 
-(defn remove-component-from-entity
-  "removes the compnent (which must be a keyword) from the matching entity"
-  [entityname, componentkey]
-  (swap! entities 
-         #(map (fn dissoc-if [e] (if (= (:name e) entityname) (dissoc e componentkey) e)) % )))
 
-(defn compare-entity-priority [a b]
-  (let [apri (:priority (:layout a))
-        bpri (:priority (:layout b))
-        both (and (not (nil? apri)) (not (nil? bpri)))
-        ax (not (nil? apri))
-        bx (not (nil? bpri))
-        ]
-    (println (:name a) apri (:name b) bpri )
-    (println both ax bx)
-    (cond 
-      both (compare apri bpri)
-      ax   -1
-      bx   1 
-      :else  (compare (:name a) (:name b))
-      )))
+(comment 
+(def img1 (buffered-image 100 100))
+(def img2 (buffered-image 100 100))
+(swap! entities #(-> % (assoc "test1" {:frame img1})))
+(swap! entities #(-> % (assoc "test2" {:frame img2})))
 
-(defn prioritize-entities [ents]
-  (sort compare-entity-priority ents))
+; (assoc-in @e ["test" :x] 1)
+(swap! entities assoc-in ["test1" :x] 1)
+(swap! entities assoc-in ["test1" :y] 1)
+(swap! entities assoc-in ["test2" :x] 50)
+(swap! entities assoc-in ["test2" :y] 100)
 
+(swap! entities dissoc "test1")
+(swap! entities dissoc "test2")
+
+(swap! entities assoc-in ["test1" :frame] (let [g  (.getGraphics img1)] (seesaw.graphics/push g ( seesaw.graphics/draw g (rect 0 0 100 100) (style :foreground java.awt.Color/RED)))))
+
+(def s1 (style :foreground java.awt.Color/RED :background java.awt.Color/RED))
+(def s2 (style :foreground java.awt.Color/BLUE))
+
+(let [g  (.createGraphics img1)] (draw g (rect 0 0 90 90) s1  ))
+(let [g  (.getGraphics img1)] (draw g (rect 0 0 100 100) s2  ))
+(let [g  (.createGraphics img1)] (draw g (line 0 0 100 100) s2  ))
+
+(let [g  (.getGraphics img1)] g)
+)
