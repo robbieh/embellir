@@ -1,9 +1,8 @@
-(ns embellir.doodles.circle
+(ns embellir.doodles.circle2
   (:gen-class)
   (:use 
     seesaw.graphics
     seesaw.color
-    embellir.illustrator.util
     )
   (:require 
      [clj-time.core :as clj-time]
@@ -12,27 +11,25 @@
 
 (def private-data (atom {}))
 
-(defn draw-doodle [^java.awt.image.BufferedImage image ^java.awt.Graphics2D graphics]
-
-  (let [sizex (.getWidth image)
-        sizey (.getHeight image)
+(defn draw-doodle [^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics]
+  (let [sizex (.getWidth canvas)
+        sizey (.getHeight canvas)
         ;d (:diameter @private-data)
         d (min sizex sizey) 
-        pct (/ (mod (clj-time/sec (clj-time.local/local-now)) 60 ) 60 ) 
+        pct (/ (- 60 (mod (clj-time/sec (clj-time.local/local-now)) 60 )) 60 ) 
         s (* d pct)
         ] 
 ;    (do (println "draw-doodle" sizex sizey d s))
-;    (do (println "draw-doodle sizex,y" sizex sizey "diam" d "seconds%" pct "seconds size" s))
-    (blank-image image graphics)
+    (do (println "draw-doodle2 sizex,y" sizex sizey "diam" d "seconds%" pct "seconds size" s))
     (push graphics (draw graphics
                 (ellipse (/ 2 sizex) (/ 2 sizey) s s) (style :foreground java.awt.Color/RED ) 
-                (ellipse (/ 2 sizex) (/ 2 sizey) d d) (style :foreground java.awt.Color/GREEN)
+                (ellipse (/ 2 sizex) (/ 2 sizey) d d) (style :foreground java.awt.Color/BLUE)
                 )) 
 
     )
   )
 
-(comment defn new-doodle [identifier]
+(defn new-doodle [identifier]
   (let [canvas  (embellir.illustrator.systems/create-doodle-canvas draw-doodle )
                  
         ]

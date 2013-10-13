@@ -13,7 +13,8 @@
 ; name is the main map key
 ; map should contain a minimum of :function and :peroid, or a :threadfn
 ; :function - fn to update g2d object, or nil if entity handles its own thread
-; :period   - how many ms between updates?
+; :sleepms  - how many ms to sleep between updates?
+; :next-time - time at which it should next run
 ; :threadfn - fn that will be run in a thread
 ; :frame    - the image object
 ;
@@ -24,7 +25,13 @@
 ;   
 
 (defonce entities (atom {}))
-
+(def base-entity-map {:frame nil
+                      :buffer nil
+                      :x 0
+                      :y 0
+                      :sleepms 1000
+                      :next-time 0
+                      })
 
 ; (def img1 (buffered-image 100 100))
 ;
@@ -48,10 +55,19 @@
 (swap! entities #(-> % (assoc "test1" {:frame img1})))
 (swap! entities #(-> % (assoc "test2" {:frame img2})))
 
+(def img1buf (buffered-image 100 100) )
+(def img2buf (buffered-image 100 100) )
+
 ; (assoc-in @e ["test" :x] 1)
+(swap! entities assoc-in ["test1" :buffer] img1buf)
+(swap! entities assoc-in ["test2" :buffer] img2buf)
 (swap! entities assoc-in ["test1" :x] 1)
 (swap! entities assoc-in ["test1" :y] 1)
-(swap! entities assoc-in ["test2" :x] 50)
+(swap! entities assoc-in ["test1" :sleepms] 100)
+(swap! entities assoc-in ["test1" :function] embellir.doodles.circle/draw-doodle)
+(swap! entities assoc-in ["test2" :sleepms] 10)
+(swap! entities assoc-in ["test2" :function] embellir.doodles.circle/draw-doodle)
+(swap! entities assoc-in ["test2" :x] 55)
 (swap! entities assoc-in ["test2" :y] 100)
 
 (swap! entities dissoc "test1")
@@ -66,5 +82,10 @@
 (let [g  (.getGraphics img1)] (draw g (rect 0 0 100 100) s2  ))
 (let [g  (.createGraphics img1)] (draw g (line 0 0 100 100) s2  ))
 
-(let [g  (.getGraphics img1)] g)
-)
+(let [g  (.createGraphics img1)] g)
+(.getWidth img1)
+img1
+
+(pprint @entities)
+
+  )
