@@ -50,6 +50,7 @@
 
 
 (comment 
+
 (def img1 (buffered-image 100 100))
 (def img2 (buffered-image 100 100))
 (swap! entities #(-> % (assoc "test1" {:frame img1})))
@@ -58,17 +59,12 @@
 (def img1buf (buffered-image 100 100) )
 (def img2buf (buffered-image 100 100) )
 
+(def canvas1 (canvas :background (color 0 0 0 255) :width 100 :height 100 :paint embellir.doodles.circle/draw-doodle))
+(swap! entities #(-> % (assoc "test1" {:canvas canvas1})))
+
 ; (assoc-in @e ["test" :x] 1)
-(swap! entities assoc-in ["test1" :buffer] img1buf)
-(swap! entities assoc-in ["test2" :buffer] img2buf)
-(swap! entities assoc-in ["test1" :x] 1)
-(swap! entities assoc-in ["test1" :y] 1)
-(swap! entities assoc-in ["test1" :sleepms] 100)
-(swap! entities assoc-in ["test1" :function] embellir.doodles.circle/draw-doodle)
-(swap! entities assoc-in ["test2" :sleepms] 10)
-(swap! entities assoc-in ["test2" :function] embellir.doodles.circle/draw-doodle)
-(swap! entities assoc-in ["test2" :x] 55)
-(swap! entities assoc-in ["test2" :y] 100)
+(swap! entities assoc-in ["test1" :sleepms] 2000)
+(swap! entities assoc-in ["test2" :sleepms] 1000)
 
 (swap! entities dissoc "test1")
 (swap! entities dissoc "test2")

@@ -12,10 +12,10 @@
 
 (def private-data (atom {}))
 
-(defn draw-doodle [^java.awt.image.BufferedImage image ^java.awt.Graphics2D graphics]
+(defn draw-doodle [^java.awt.JPanel panel ^java.awt.Graphics2D graphics]
 
-  (let [sizex (.getWidth image)
-        sizey (.getHeight image)
+  (let [sizex (.getWidth panel)
+        sizey (.getHeight panel)
         ;d (:diameter @private-data)
         d (min sizex sizey) 
         pct (/ (mod (clj-time/sec (clj-time.local/local-now)) 60 ) 60 ) 
@@ -23,7 +23,7 @@
         ] 
 ;    (do (println "draw-doodle" sizex sizey d s))
 ;    (do (println "draw-doodle sizex,y" sizex sizey "diam" d "seconds%" pct "seconds size" s))
-    (blank-image image graphics)
+    (blank-image panel graphics)
     (push graphics (draw graphics
                 (ellipse (/ 2 sizex) (/ 2 sizey) s s) (style :foreground java.awt.Color/RED ) 
                 (ellipse (/ 2 sizex) (/ 2 sizey) d d) (style :foreground java.awt.Color/GREEN)
