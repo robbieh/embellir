@@ -1,5 +1,8 @@
 (ns embellir.doodles.circle
   (:gen-class)
+  (:import 
+           java.awt.AlphaComposite
+     )
   (:use 
     seesaw.graphics
     seesaw.color
@@ -23,7 +26,9 @@
         ] 
 ;    (do (println "draw-doodle" sizex sizey d s))
 ;    (do (println "draw-doodle sizex,y" sizex sizey "diam" d "seconds%" pct "seconds size" s))
-    (blank-image panel graphics)
+;    (blank-image panel graphics)
+;    (.setComposite graphics (AlphaComposite/getInstance AlphaComposite/SRC_OVER, 0.5))
+    
     (push graphics (draw graphics
                 (ellipse (/ 2 sizex) (/ 2 sizey) s s) (style :foreground java.awt.Color/RED ) 
                 (ellipse (/ 2 sizex) (/ 2 sizey) d d) (style :foreground java.awt.Color/GREEN)

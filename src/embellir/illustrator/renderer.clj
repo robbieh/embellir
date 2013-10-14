@@ -1,10 +1,9 @@
 (ns embellir.illustrator.renderer
 ;  (:gen-class)
-  (:import [java.awt RenderingHints]
-           [javax.swing JFrame JLabel JComponent] 
-           [java.awt BorderLayout]
-;           [java.awt Graphics]
-;           [java.awt.image BufferedImage]
+  (:import 
+          
+         
+            java.awt.AlphaComposite
            ) 
   (:require [seesaw.core :as seesaw]
      [embellir.illustrator.entities]
@@ -22,6 +21,7 @@
 (def xyz (seesaw/xyz-panel :background "#000" ))
 (def f (seesaw/frame :title "embellir" :width 500 :height 500 :content xyz :visible? true ) )
 
+
 (comment
 (repaint! xyz) 
 (pprint @entities)
@@ -31,16 +31,19 @@
 (println continue-rendering?) 
 (println (.getState render-thread))
 
-(def canvas1 (canvas :background (color 0 0 0 255) :bounds [50 50 100 100] :id :test1 
+(def canvas1 (canvas :background (color 0 0 0 0) :bounds [50 50 100 100] :id :test1 
     :paint embellir.doodles.circle/draw-doodle))    
-(def canvas2 (canvas :background (color 0 0 0 255) :bounds [75 75 100 100] :id :test2 
+(def canvas2 (canvas :background (color 0 0 0 0) :bounds [75 75 100 100] :id :test2 
     :paint embellir.doodles.circle/draw-doodle))    
-(swap! entities #(-> % (assoc "test1" {:canvas canvas1})))  
-(swap! entities #(-> % (assoc "test2" {:canvas canvas2})))  
+(.setOpaque canvas1 false)
+(.setOpaque canvas2 false)
+(swap! entities #(-> % (assoc "test1" {:canvas canvas1 :sleepms 1000})))
+(swap! entities #(-> % (assoc "test2" {:canvas canvas2 :sleepms 1000})))  
 (swap! entities assoc-in ["test1" :sleepms] 2000)
 (swap! entities assoc-in ["test2" :sleepms] 2000)
 (config! xyz :items (conj (config xyz :items) canvas1))
 (config! xyz :items (conj (config xyz :items) canvas2))
+(config xyz :items )
 (config! xyz :items nil)
 (swap! entities dissoc "test1")
 (seesaw.dev/show-options xyz)
@@ -52,12 +55,11 @@
   ; call the :function of the entity with the :frame and graphics for the frame, let it draw in (future)
   ; figure out next run time and update :next-time according to :periodms
   ;
-  (let [{:keys [function sleepms frame]} (get @entities entname)
-       g (.createGraphics frame)
+  (let [{:keys [canvas sleepms]} (get @entities entname)
        next-time (+ (now-long) sleepms)
        ]
 ;   (println "rendering" entname next-time)
-       (function frame g) 
+       (repaint! canvas) 
        (swap! entities assoc-in [entname :next-time] next-time)
    ) 
   )
@@ -68,13 +70,13 @@
   ;; run through @entities and check the :next-time
   ;; if current time is past it, call render-entity on it
   ;; sleep until the next expected time
-  (while continue-rendering?
-    (dorun  (map render-entity (keys @entities) )) 
+  (while continue-repainting?
+    (dorun  (map repaint-entity (keys @entities) )) 
     (Thread/sleep 100)
     )
   )
-(comment def repaint-thread (Thread. repaint-loop))
-(comment .start repaint-thread)
+(def repaint-thread (Thread. repaint-loop))
+(.start repaint-thread)
 
 
 
