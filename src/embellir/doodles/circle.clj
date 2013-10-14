@@ -12,7 +12,7 @@
 
 (def private-data (atom {}))
 
-(defn draw-doodle [^java.awt.JPanel panel ^java.awt.Graphics2D graphics]
+(defn draw-doodle [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
 
   (let [sizex (.getWidth panel)
         sizey (.getHeight panel)

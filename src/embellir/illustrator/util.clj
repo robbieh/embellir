@@ -20,13 +20,13 @@
          (.drawImage g2d ^java.awt.Image frame  0  0 nil)) )
 
 (defn draw-image [^java.awt.Graphics2D g2d {:keys [frame x y]} ]
-        (locking frame (.drawImage g2d ^java.awt.Image frame ^Integer x ^Integer y nil)))
+        (.drawImage g2d ^java.awt.Image frame ^Integer x ^Integer y nil))
 
 (defn now-long [] (clj-time.coerce/to-long  (clj-time.local/local-now)))
 
-(defn blank-image [^java.awt.image.BufferedImage image ^java.awt.Graphics2D graphics]
-  (let [sizex (.getWidth image)
-        sizey (.getHeight image)]
+(defn blank-image [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  (let [sizex (.getWidth panel)
+        sizey (.getHeight panel)]
     (do 
         (.setComposite graphics (AlphaComposite/getInstance AlphaComposite/CLEAR))
         (.fillRect graphics 0 0 sizex sizey)

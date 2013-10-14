@@ -51,37 +51,5 @@
 
 (comment 
 
-(def img1 (buffered-image 100 100))
-(def img2 (buffered-image 100 100))
-(swap! entities #(-> % (assoc "test1" {:frame img1})))
-(swap! entities #(-> % (assoc "test2" {:frame img2})))
-
-(def img1buf (buffered-image 100 100) )
-(def img2buf (buffered-image 100 100) )
-
-(def canvas1 (canvas :background (color 0 0 0 255) :width 100 :height 100 :paint embellir.doodles.circle/draw-doodle))
-(swap! entities #(-> % (assoc "test1" {:canvas canvas1})))
-
-; (assoc-in @e ["test" :x] 1)
-(swap! entities assoc-in ["test1" :sleepms] 2000)
-(swap! entities assoc-in ["test2" :sleepms] 1000)
-
-(swap! entities dissoc "test1")
-(swap! entities dissoc "test2")
-
-(swap! entities assoc-in ["test1" :frame] (let [g  (.getGraphics img1)] (seesaw.graphics/push g ( seesaw.graphics/draw g (rect 0 0 100 100) (style :foreground java.awt.Color/RED)))))
-
-(def s1 (style :foreground java.awt.Color/RED :background java.awt.Color/RED))
-(def s2 (style :foreground java.awt.Color/BLUE))
-
-(let [g  (.createGraphics img1)] (draw g (rect 0 0 90 90) s1  ))
-(let [g  (.getGraphics img1)] (draw g (rect 0 0 100 100) s2  ))
-(let [g  (.createGraphics img1)] (draw g (line 0 0 100 100) s2  ))
-
-(let [g  (.createGraphics img1)] g)
-(.getWidth img1)
-img1
-
-(pprint @entities)
 
   )

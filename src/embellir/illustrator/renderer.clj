@@ -6,7 +6,9 @@
 ;           [java.awt Graphics]
 ;           [java.awt.image BufferedImage]
            ) 
-  (:require [seesaw.core :as seesaw])
+  (:require [seesaw.core :as seesaw]
+     [embellir.illustrator.entities]
+     )
   (:use 
         seesaw.core
         seesaw.graphics
@@ -17,15 +19,7 @@
   )
 
 
-(defn swing-paint-call [^javax.swing.JPanel canvas ^java.awt.Graphics2D graphics]
-  ;; loop through entity list, draw all items onto the canvas
- (let [draw-image-graphics (partial draw-image graphics)] 
-   (push graphics 
-       ;draw-image g2d image x y
-       (comment dorun (map copy-image-to-buffer (vals @entities)))
-       (dorun (map draw-image-graphics (vals @entities))))))
-
-(def xyz (seesaw/xyz-panel :background "#000" :paint swing-paint-call))
+(def xyz (seesaw/xyz-panel :background "#000" ))
 (def f (seesaw/frame :title "embellir" :width 500 :height 500 :content xyz :visible? true ) )
 
 (comment
@@ -34,19 +28,26 @@
 (map pprint (vals @entities)) 
 (render-entity "test1" (get @entities "test1"))
 (render-entity "test2" (get @entities "test2"))
-(println continue-repainting?) 
 (println continue-rendering?) 
 (println (.getState render-thread))
-(println (.getState repaint-thread))
+
+(def canvas1 (canvas :background (color 0 0 0 255) :bounds [50 50 100 100] :id :test1 
+    :paint embellir.doodles.circle/draw-doodle))    
+(def canvas2 (canvas :background (color 0 0 0 255) :bounds [75 75 100 100] :id :test2 
+    :paint embellir.doodles.circle/draw-doodle))    
+(swap! entities #(-> % (assoc "test1" {:canvas canvas1})))  
+(swap! entities #(-> % (assoc "test2" {:canvas canvas2})))  
+(swap! entities assoc-in ["test1" :sleepms] 2000)
+(swap! entities assoc-in ["test2" :sleepms] 2000)
+(config! xyz :items (conj (config xyz :items) canvas1))
+(config! xyz :items (conj (config xyz :items) canvas2))
+(config! xyz :items nil)
+(swap! entities dissoc "test1")
+(seesaw.dev/show-options xyz)
 )
 
-(def repaint-sleepms 100)
-(def continue-repainting? true)
-(defn repaint-loop [] (while continue-repainting?  (do (repaint! xyz)  (Thread/sleep repaint-sleepms))))
-(def repaint-thread (Thread. repaint-loop))
-(.start repaint-thread)
 
-(defn render-entity
+(defn repaint-entity
   [entname]
   ; call the :function of the entity with the :frame and graphics for the frame, let it draw in (future)
   ; figure out next run time and update :next-time according to :periodms
@@ -56,13 +57,13 @@
        next-time (+ (now-long) sleepms)
        ]
 ;   (println "rendering" entname next-time)
-       (locking frame (function frame g)) 
+       (function frame g) 
        (swap! entities assoc-in [entname :next-time] next-time)
    ) 
   )
 
-(def continue-rendering? true)
-(defn render-loop
+(def continue-repainting? true)
+(defn repaint-loop
   []
   ;; run through @entities and check the :next-time
   ;; if current time is past it, call render-entity on it
@@ -72,8 +73,8 @@
     (Thread/sleep 100)
     )
   )
-(def render-thread (Thread. render-loop))
-(.start render-thread)
+(comment def repaint-thread (Thread. repaint-loop))
+(comment .start repaint-thread)
 
 
 
