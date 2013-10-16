@@ -22,33 +22,24 @@
 (def f (seesaw/frame :title "embellir" :width 500 :height 500 :content xyz :visible? true ) )
 
 
-(comment
-(repaint! xyz) 
-(pprint @entities)
-(map pprint (vals @entities)) 
-(render-entity "test1" (get @entities "test1"))
-(render-entity "test2" (get @entities "test2"))
-(println continue-rendering?) 
-(println (.getState render-thread))
+(defn stoptest []
+  (config! xyz :items nil)
+  (swap! entities dissoc "test1")
+  (swap! entities dissoc "test2") )
 
-(def canvas1 (canvas :background (color 0 0 0 0) :bounds [50 50 100 100] :id :test1 
-    :paint embellir.doodles.circle/draw-doodle))    
-(def canvas2 (canvas :background (color 0 0 0 0) :bounds [75 75 100 100] :id :test2 
-    :paint embellir.doodles.circle/draw-doodle))    
-(.setOpaque canvas1 false)
-(.setOpaque canvas2 false)
-(swap! entities #(-> % (assoc "test1" {:canvas canvas1 :sleepms 1000})))
-(swap! entities #(-> % (assoc "test2" {:canvas canvas2 :sleepms 1000})))  
-(swap! entities assoc-in ["test1" :sleepms] 2000)
-(swap! entities assoc-in ["test2" :sleepms] 2000)
-(config! xyz :items (conj (config xyz :items) canvas1))
-(config! xyz :items (conj (config xyz :items) canvas2))
-(config xyz :items )
-(config! xyz :items nil)
-(swap! entities dissoc "test1")
-(seesaw.dev/show-options xyz)
-)
-
+(defn starttest []
+  (def canvas1 (canvas :background (color 0 0 0 0) :bounds [50 50 100 100] :id :test1 
+      :paint embellir.doodles.circle/draw-doodle))    
+  (def canvas2 (canvas :background (color 0 0 0 0) :bounds [75 75 100 100] :id :test2 
+      :paint embellir.doodles.circle/draw-doodle))    
+  (.setOpaque canvas1 false)
+  (.setOpaque canvas2 false)
+  (swap! entities #(-> % (assoc "test1" {:canvas canvas1 :sleepms 1000})))
+  (swap! entities #(-> % (assoc "test2" {:canvas canvas2 :sleepms 1000})))  
+  ;(swap! entities assoc-in ["test1" :sleepms] 2000)
+  ;(swap! entities assoc-in ["test2" :sleepms] 2000)
+  (config! xyz :items (conj (config xyz :items) canvas1))
+  (config! xyz :items (conj (config xyz :items) canvas2)) ) 
 
 (defn repaint-entity
   [entname]
@@ -118,4 +109,20 @@
             (.put updateq item))))
       (catch Exception e (str "Exception in manage-queue: " (.getMessage e))))
     (recur (.take ^java.util.concurrent.PriorityBlockingQueue updateq))))
+
+(comment
+(repaint! xyz) 
+(pprint @entities)
+(map pprint (vals @entities)) 
+(render-entity "test1" (get @entities "test1"))
+(render-entity "test2" (get @entities "test2"))
+(println continue-rendering?) 
+(println (.getState render-thread))
+
+(config xyz :items )
+(seesaw.dev/show-options xyz)
+(starttest)
+(stoptest)
+
+)
 
