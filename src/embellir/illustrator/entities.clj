@@ -40,21 +40,24 @@
 
 (defn uniquename [n] n) ;TODO: check entity list
 
-(defn load-entity [entname {:keys [ placement sleepms]} ]
+(defn load-entity [doodlename {:keys [placement sleepms entname]} ]
   ;determine size, position
   ;resolve entity function
   ;create canvas with those attributes and overriden :paint
- (let [fqi (str "embellir.doodles." entname)
-       bounds (screen/placement placement)]
-   (load-file (str "src/embellir/doodles/" entname ".clj"))
+ (let [fqi (str "embellir.doodles." doodlename)
+       bounds (screen/placement placement)
+       entname' (when-not entname doodlename)
+       ]
+   (load-file (str "src/embellir/doodles/" doodlename ".clj"))
    (if (find-ns (symbol fqi))
      (if-let [func (resolve (symbol fqi "draw-doodle"))]
        (let [canvas (canvas :background (color 0 0 0 0) :bounds bounds
                             :paint @func)
-             itemname (uniquename entname)
+             itemname (uniquename entname')
              sleepms' (if sleepms sleepms 1000)
              ]
          (.setOpaque canvas false)
+         (println sleepms')
          (swap! entities #(-> % (assoc itemname {:canvas canvas :sleepms sleepms'})))
          (config! window/xyz :items (conj (config window/xyz :items) canvas))
          )
@@ -63,9 +66,19 @@
    ) 
   )
 
+(defn remove-entity [entname]
+  (let [canvas (get-in @entities [entname :canvas])]
+    (println (config window/xyz :items))
+    (println canvas)
+    (println (remove #(= % canvas) (config window/xyz :items)))
+    (config! window/xyz :items (remove #(= % canvas) (config window/xyz :items)))
+    (swap! entities dissoc entname)
+    )
+  )
 
 (comment 
 (load-entity "circle" {:placement [ :fullscreen] :sleepms 2000} )
+(load-entity "circle" {:placement [ :fullscreen] :sleepms 2000 :entname "c2"} )
 (load-file "src/embellir/doodles/circle.clj")
 (symbol "embellir.doodles.circle")
 (symbol "embellir.doodles.circle" "draw-doodle")
@@ -75,6 +88,10 @@
 (resolve (symbol "embellir.doodles.circle" "draw-doodle"))
 (fn?  @(resolve (symbol "embellir.doodles.circle" "draw-doodle")))
 (type embellir.doodles.circle/draw-doodle)
+(config! window/xyz :items (dissoc (config window/xyz :items) canvas))
+(config window/xyz :items )
+(remove-entity "circle")
+(pprint  @entities)
   )
 
 
