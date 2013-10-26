@@ -46,7 +46,7 @@
   ;create canvas with those attributes and overriden :paint
  (let [fqi (str "embellir.doodles." doodlename)
        bounds (screen/placement placement)
-       entname' (when-not entname doodlename)
+       entname' (if entname entname doodlename)
        ]
    (load-file (str "src/embellir/doodles/" doodlename ".clj"))
    (if (find-ns (symbol fqi))
@@ -57,7 +57,6 @@
              sleepms' (if sleepms sleepms 1000)
              ]
          (.setOpaque canvas false)
-         (println sleepms')
          (swap! entities #(-> % (assoc itemname {:canvas canvas :sleepms sleepms'})))
          (config! window/xyz :items (conj (config window/xyz :items) canvas))
          )
@@ -78,7 +77,8 @@
 
 (comment 
 (load-entity "circle" {:placement [ :fullscreen] :sleepms 2000} )
-(load-entity "circle" {:placement [ :fullscreen] :sleepms 2000 :entname "c2"} )
+(load-entity "circle" {:placement [10 10 150 150 ] :sleepms 2000 :entname "c2"} )
+(load-entity "circle" {:placement [10 10 150 150 ] :sleepms 1000 :entname "c3"} )
 (load-file "src/embellir/doodles/circle.clj")
 (symbol "embellir.doodles.circle")
 (symbol "embellir.doodles.circle" "draw-doodle")
@@ -91,8 +91,11 @@
 (config! window/xyz :items (dissoc (config window/xyz :items) canvas))
 (config window/xyz :items )
 (remove-entity "circle")
+(remove-entity "c3")
 (pprint  @entities)
-  )
+(config! window/xyz :items nil)
+(reset! entities {})
+)
 
 
 
