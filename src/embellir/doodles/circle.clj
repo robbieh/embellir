@@ -7,6 +7,7 @@
     seesaw.graphics
     seesaw.color
     embellir.illustrator.util
+    [embellir.illustrator.entities :only [entities]]
     )
   (:require 
      [clj-time.core :as clj-time]
@@ -15,7 +16,7 @@
 
 (def private-data (atom {}))
 
-(defn draw-doodle [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+(defn draw-doodle [entname ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
 
   (let [sizex (.getWidth panel)
         sizey (.getHeight panel)
@@ -23,14 +24,15 @@
         d (min sizex sizey) 
         pct (/ (mod (clj-time/sec (clj-time.local/local-now)) 60 ) 60 ) 
         s (* d pct)
+        ent (get @entities entname)
+        color (or (:color ent) java.awt.Color/RED)
         ] 
 ;    (do (println "draw-doodle" sizex sizey d s))
 ;    (do (println "draw-doodle sizex,y" sizex sizey "diam" d "seconds%" pct "seconds size" s))
 ;    (blank-image panel graphics)
 ;    (.setComposite graphics (AlphaComposite/getInstance AlphaComposite/SRC_OVER, 0.5))
-    
     (push graphics (draw graphics
-                (ellipse (/ 2 sizex) (/ 2 sizey) s s) (style :foreground java.awt.Color/RED ) 
+                (ellipse (/ 2 sizex) (/ 2 sizey) s s) (style :foreground color)
                 (ellipse (/ 2 sizex) (/ 2 sizey) d d) (style :foreground java.awt.Color/GREEN)
                 )) 
 
