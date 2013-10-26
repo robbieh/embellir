@@ -1,5 +1,5 @@
 (ns embellir.bitdock
-  (:gen-class)
+;  (:gen-class)
   (:import (java.net
              ServerSocket
              SocketException)

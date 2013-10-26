@@ -3,6 +3,11 @@
   (:import  [java.awt.image BufferedImage]
      
      )
+  (:require 
+     [embellir.illustrator.screen :as screen]
+     [embellir.illustrator.window :as window]
+     
+     )
   (:use seesaw.core
      seesaw.graphics
      seesaw.color
@@ -33,6 +38,55 @@
                       :next-time 0
                       })
 
+(defn uniquename [n] n) ;TODO: check entity list
+
+(defn load-entity [entname {:keys [ placement sleepms]} ]
+  ;determine size, position
+  ;resolve entity function
+  ;create canvas with those attributes and overriden :paint
+ (let [fqi (str "embellir.doodles." entname)
+       bounds (screen/placement placement)]
+   (load-file (str "src/embellir/doodles/" entname ".clj"))
+   (if (find-ns (symbol fqi))
+     (if-let [func (resolve (symbol fqi "draw-doodle"))]
+       (let [canvas (canvas :background (color 0 0 0 0) :bounds bounds
+                            :paint @func)
+             itemname (uniquename entname)
+             sleepms' (if sleepms sleepms 1000)
+             ]
+         (.setOpaque canvas false)
+         (swap! entities #(-> % (assoc itemname {:canvas canvas :sleepms sleepms'})))
+         (config! window/xyz :items (conj (config window/xyz :items) canvas))
+         )
+       )
+     )
+   ) 
+  )
+
+
+(comment 
+(load-entity "circle" {:placement [ :fullscreen] :sleepms 2000} )
+(load-file "src/embellir/doodles/circle.clj")
+(symbol "embellir.doodles.circle")
+(symbol "embellir.doodles.circle" "draw-doodle")
+(symbol  "draw-doodle")
+(type (symbol "embellir.doodles.circle" "draw-doodle"))
+(find-ns (symbol "embellir.doodles.circle" ))
+(resolve (symbol "embellir.doodles.circle" "draw-doodle"))
+(fn?  @(resolve (symbol "embellir.doodles.circle" "draw-doodle")))
+(type embellir.doodles.circle/draw-doodle)
+  )
+
+
+
+
+
+
+
+
+
+
+
 ; (def img1 (buffered-image 100 100))
 ;
 ; (-> @entities (assoc "test" {:this "that"}))     
@@ -49,7 +103,3 @@
 
 
 
-(comment 
-
-
-  )
