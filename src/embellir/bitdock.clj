@@ -42,7 +42,7 @@
         (curator/receive-data-for-curio curioname dmap)))
 
 (defn layout [data] 
-  (if data 
+  (comment if data 
     (embellir.illustrator.systems/relayout data)
     (embellir.illustrator.systems/relayout)))
 
@@ -55,7 +55,7 @@
 (defn illustrate [data]
   (doseq [item (str/split data #" ")]
     (println "illustrating: " item)
-    (embellir.illustrator.systems/load-entity item))
+    (embellir.illustrator.entities/load-entity item))
   )
 
 (def cmd-map { "supply" supply
