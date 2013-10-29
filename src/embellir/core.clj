@@ -9,7 +9,7 @@
   )
 
 
-(defn read-config-file [filename]
+(comment defn read-config-file [filename]
   (with-open [rd (io/reader filename)]
     (doseq [line (line-seq rd)]
       (bitdock/handle-command line)))
@@ -27,7 +27,7 @@
 
 (defn main [& args]
   (when (.exists (File. ^String (first args)))
-    (read-config-file (first args)))
+    (comment read-config-file (first args)))
 
   ; start the illustrator
   (illustrator/start-illustrator)
