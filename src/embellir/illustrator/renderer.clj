@@ -26,7 +26,7 @@
   (swap! entities dissoc "test1")
   (swap! entities dissoc "test2") )
 
-(defn starttest []
+(comment defn starttest []
   (def canvas1 (canvas :background (color 0 0 0 0) :bounds [50 50 100 100] :id :test1 
       :paint embellir.doodles.circle/draw-doodle))    
   (def canvas2 (canvas :background (color 0 0 0 0) :bounds [75 75 100 100] :id :test2 
@@ -62,7 +62,7 @@
   ;; sleep until the next expected time
   (while continue-repainting?
     (dorun  (map repaint-entity (keys @entities) )) 
-    (Thread/sleep 100)
+    (Thread/sleep 1000)
     )
   )
 (def repaint-thread (Thread. repaint-loop))
@@ -110,7 +110,7 @@
     (recur (.take ^java.util.concurrent.PriorityBlockingQueue updateq))))
 
 (comment
-(repaint! xyz) 
+(repaint! window/xyz) 
 (pprint @entities)
 (map pprint (vals @entities)) 
 (render-entity "test1" (get @entities "test1"))
@@ -120,7 +120,7 @@
 
 (config window/xyz :items )
 (seesaw.dev/show-options xyz)
-(starttest)
+(comment starttest)
 (stoptest)
 
 )

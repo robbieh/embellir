@@ -170,7 +170,7 @@
   )
  ))
 
-(defn draw-doodle [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+(defn draw-doodle [ent ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
 ;  (push-matrix)
   (draw-timeclock panel graphics)
 ;  (pop-matrix)

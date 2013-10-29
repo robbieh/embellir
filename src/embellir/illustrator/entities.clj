@@ -99,10 +99,10 @@
 (type embellir.doodles.circle/draw-doodle)
 (config! window/xyz :items (dissoc (config window/xyz :items) canvas))
 (config window/xyz :items )
-(remove-entity "polarclock")
 (remove-entity "c2")
 (pprint  @entities)
 (load-entity "polarclock" {:placement [ :fullscreen] :sleepms 1000} )
+(remove-entity "polarclock")
 (remove-entity "ipviz")
 (load-entity "ipviz" {:placement [ :fullscreen] :sleepms 1000
                       :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
