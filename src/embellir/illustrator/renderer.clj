@@ -7,6 +7,7 @@
            ) 
   (:require [seesaw.core :as seesaw]
      [embellir.illustrator.entities]
+     [embellir.illustrator.window :as window]
      )
   (:use 
         seesaw.core
@@ -18,12 +19,10 @@
   )
 
 
-(def xyz (seesaw/xyz-panel :background "#000" ))
-(def f (seesaw/frame :title "embellir" :width 500 :height 500 :content xyz :visible? true ) )
 
 
 (defn stoptest []
-  (config! xyz :items nil)
+  (config! window/xyz :items nil)
   (swap! entities dissoc "test1")
   (swap! entities dissoc "test2") )
 
@@ -38,8 +37,8 @@
   (swap! entities #(-> % (assoc "test2" {:canvas canvas2 :sleepms 1000})))  
   ;(swap! entities assoc-in ["test1" :sleepms] 2000)
   ;(swap! entities assoc-in ["test2" :sleepms] 2000)
-  (config! xyz :items (conj (config xyz :items) canvas1))
-  (config! xyz :items (conj (config xyz :items) canvas2)) ) 
+  (config! window/xyz :items (conj (config window/xyz :items) canvas1))
+  (config! window/xyz :items (conj (config window/xyz :items) canvas2)) ) 
 
 (defn repaint-entity
   [entname]
@@ -119,7 +118,7 @@
 (println continue-rendering?) 
 (println (.getState render-thread))
 
-(config xyz :items )
+(config window/xyz :items )
 (seesaw.dev/show-options xyz)
 (starttest)
 (stoptest)

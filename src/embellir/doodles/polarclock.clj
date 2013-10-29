@@ -55,6 +55,7 @@
   (/ TWO-PI (.getActualMaximum ^java.util.Calendar (calNow) Calendar/DAY_OF_MONTH)))
 
 ;(defn draw-monthclock [entity]
+;  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
 ;  ;  (rotate (- PI))
 ;  (rotate (- HALF-PI))
 ;  (stroke 0 75 25)
@@ -83,17 +84,17 @@
 ;  (pop-matrix))
 
 (defn draw-timeclock 
-  [entity ^java.awt.Graphics2D graphics2D]
-  (let [width (:width (:bound entity)) 
-        height (:height (:bound entity))
+  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  (let [width (.getWidth panel)
+        height (.getHeight panel)
         size (min height width)
         centerx (* 0.5 width)
         centery (* 0.5 height)
         diam  (* 0.8 size)
         tmdiam (* 0.7 size)
         sdiam (* 0.5 size)
-        x     (:x (:position entity))
-        y     (:y (:position entity))
+    ;    x     (:x (:position entity))
+    ;    y     (:y (:position entity))
         ;stoprad  (minutes-to-radians (clj-time/minute (clj-time/now)))
         stopdeg  (minutes-to-degrees (clj-time/minute (clj-time/now)))
         ;gmtrad  (hour-to-radians (clj-time/hour (clj-time/now)))
@@ -114,9 +115,9 @@
         minstyle1 (style :foreground (color 0 90 0) :background (color 10 10 10 0) :stroke minstroke1 )
         minstyle2 (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke minstroke2 )
         ]
-    (push graphics2D 
-          (translate graphics2D centerx centery)
-          (draw graphics2D
+    (push graphics 
+          (translate graphics centerx centery)
+          (draw graphics
       
         ;        (iarc 0 0 tmdiam tmdiam 0 -90) tmpstyle2
 ;                (arc 0 0 tmdiam tmdiam 0 270) tmpstyle
@@ -169,14 +170,14 @@
   )
  ))
 
-(defn draw-polarclock [entity ^java.awt.Graphics2D graphics2D]
+(defn draw-doodle [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
 ;  (push-matrix)
-  (draw-timeclock entity graphics2D)
+  (draw-timeclock panel graphics)
 ;  (pop-matrix)
  ; (draw-monthclock entity)
   )
 
-(defn illustrate []
+(comment defn illustrate []
   (let [bi (java.awt.image.BufferedImage. (illustrator/scrwidth) (illustrator/scrheight) java.awt.image.BufferedImage/TYPE_INT_ARGB)
         gr (.createGraphics bi)]
     (doto gr (.setRenderingHint RenderingHints/KEY_ANTIALIASING RenderingHints/VALUE_ANTIALIAS_ON))
