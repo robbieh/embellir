@@ -6,6 +6,7 @@
   (:use seesaw.core
      seesaw.graphics
      seesaw.color
+     [seesaw.util :only [to-dimension]]
      [embellir.illustrator.entities :only [entities]]
      )
   )
@@ -34,10 +35,16 @@
 (defn move-entity [entname x y]
   (let [canvas (get-in @entities [entname :canvas])
         ]
-    (move! canvas :to [x y])
-    )
+    (move! canvas :to [x y])))
+
+(defn resize-entity [entname w h]
+ (let [canvas (get-in @entities [entname :canvas])
+        ]
+       (config! canvas :preferred-size (to-dimension [w :by h]) )) 
+       (println  (config canvas :bounds))
   )
 
+;;;;;;;;;;;;; grid layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn make-optimal-size-table [n x y] 
   (apply conj {}   (for [cols (range 1 (inc n))]
     (let [rows (int  (clojure.math.numeric-tower/ceil (/ n cols)))
@@ -47,14 +54,15 @@
           xmargin (- x (* cols smallest))
           ymargin (- y (* rows smallest))
           ]
-      {smallest  {:cols cols :rows rows :boxsize smallest :xmargin xmargin :ymargin ymargin} }))))
+      {smallest  {:cols cols :rows rows :boxsize smallest 
+                  :xmargin xmargin :ymargin ymargin} }))))
 
 (defn get-optimal-size [n x y]
   (let [results (make-optimal-size-table n x y) 
         maximum (apply max (keys results))]
   (get results maximum))) 
 
-(defn layout-grid []
+( defn layout-grid []
   (let [candidates        (keys @entities)
         ccount            (count candidates)
         optimal           (get-optimal-size ccount
@@ -67,19 +75,21 @@
                 ymargin]} optimal
         xstart            (/ xmargin 2)
         ystart            (/ ymargin 2)
-        xseq              (map *   (flatten (repeat (range 0 cols))) (repeat boxsize))
+        xseq              (map     *
+                                   (flatten (repeat (range 0 cols))) 
+                                   (repeat boxsize))
         yseq              (flatten (map #(map * 
                                               (repeat cols %) 
                                               (repeat boxsize)) 
                                         (flatten (repeat (range 0 cols)))))
-  ;      points            (flatten (map list (take ccount xseq) (take ccount yseq)))
         ]
     (
      (println candidates)
      (println cols rows boxsize xmargin ymargin)
-;     (println points)
      (doall (map move-entity candidates xseq yseq))
-     ))
+     (doseq [c candidates] 
+       (resize-entity c boxsize boxsize)
+       )))
   )
 
 (comment
@@ -87,5 +97,8 @@
   (count @entities)
   (move-entity "c2" 10 50)
   (layout-grid)
+  (resize-entity "c2" 10 10)
+  (to-dimension [1 :by 1])
+  (config window/xyz)
   )
 
