@@ -39,9 +39,11 @@
 
 (defn resize-entity [entname w h]
  (let [canvas (get-in @entities [entname :canvas])
+       bounds (config canvas :bounds)
+       x      (.getX bounds)
+       y      (.getY bounds)
         ]
-       (config! canvas :preferred-size (to-dimension [w :by h]) )) 
-       (println  (config canvas :bounds))
+       (config! canvas :bounds [x y w h]))
   )
 
 ;;;;;;;;;;;;; grid layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -97,8 +99,8 @@
   (count @entities)
   (move-entity "c2" 10 50)
   (layout-grid)
-  (resize-entity "c2" 10 10)
+  (resize-entity "polarclock" 150 150)
   (to-dimension [1 :by 1])
-  (config window/xyz)
+  (.getWidth (config window/xyz :bounds))
   )
 
