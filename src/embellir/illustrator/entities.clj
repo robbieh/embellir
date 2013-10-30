@@ -87,6 +87,12 @@
 (remove-entity "circle")
 (load-entity "circle" {:placement [10 10 150 150 ] :sleepms 2000 :entname "c2"} )
 (load-entity "circle" {:placement [10 10 150 150 ] :sleepms 1000 :entname "c3"} )
+(load-entity "circle" {:placement [10 10 150 150 ] :sleepms 1000 :entname "c4"} )
+(load-entity "circle" {:placement [10 10 150 150 ] :sleepms 1000 :entname "c5"} )
+(load-entity "circle" {:placement [10 10 150 150 ] :sleepms 1000 :entname "c6"} )
+(load-file "src/embellir/doodles/polarclock.clj")
+(load-file "src/embellir/doodles/polarclock.clj")
+(load-file "src/embellir/doodles/polarclock.clj")
 (load-file "src/embellir/doodles/polarclock.clj")
 (symbol "embellir.doodles.circle")
 (symbol "embellir.doodles.circle" "draw-doodle")
@@ -108,8 +114,8 @@
                       :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
                       
                       } )
-(config! window/xyz :items nil)
-(reset! entities {})
+(do  (config! window/xyz :items nil)
+     (reset! entities {}))
 (get entities "circle")
   )
 
