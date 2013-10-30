@@ -64,7 +64,7 @@
         maximum (apply max (keys results))]
   (get results maximum))) 
 
-( defn layout-grid []
+(defn layout-grid []
   (let [candidates        (keys @entities)
         ccount            (count candidates)
         optimal           (get-optimal-size ccount
@@ -84,16 +84,30 @@
                                               (repeat cols %) 
                                               (repeat boxsize)) 
                                         (flatten (repeat (range 0 cols)))))
+        xmseq            (repeat xstart)
+        ymseq            (repeat ystart)
         ]
     (
      (println candidates)
      (println cols rows boxsize xmargin ymargin)
-     (doall (map move-entity candidates xseq yseq))
+     (doall (map move-entity candidates (map + xseq xmseq) (map + yseq ymseq)))
      (doseq [c candidates] 
        (resize-entity c boxsize boxsize)
        )))
   )
+;;;;;;;;;;;;; central feature layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def central-feature nil)
+
+(defn set-central-feature []
+  (let [filterfn   #(= true (:central-feature %))
+        candidates (filter filterfn )])
+  )
+(defn layout-central-feature []
+  (let [candidates    (keys @entities)
+        central       (get-central-feature)
+        ])
+  )
 (comment
   (get-optimal-size 12 1367 770)
   (count @entities)
