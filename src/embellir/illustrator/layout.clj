@@ -33,8 +33,7 @@
 ;;
 
 (defn move-entity [entname x y]
-  (let [canvas (get-in @entities [entname :canvas])
-        ]
+  (let [canvas (get-in @entities [entname :canvas]) ]
     (move! canvas :to [x y])))
 
 (defn resize-entity [entname w h]
@@ -97,17 +96,45 @@
   )
 ;;;;;;;;;;;;; central feature layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def central-feature nil)
+(def central-feature (atom nil))
 
 (defn set-central-feature []
-  (let [filterfn   #(= true (:central-feature %))
-        candidates (filter filterfn )])
+  (let [filterfn   #(get-in % [1 :central-feature])
+        candidates (keys (filter filterfn @entities))]
+  (reset! central-feature (first candidates)) ;;TODO - this ain't pretty.
+  candidates)
   )
+
 (defn layout-central-feature []
-  (let [candidates    (keys @entities)
-        central       (get-central-feature)
-        ])
+  (let [w           (.getWidth window/xyz) 
+        h           (.getHeight window/xyz) 
+        orientation (if (> h w) :v :h )
+        margin      (if (= orientation :v) (* 0.1 h) (* 0.1 w))
+        marginseq   (map * (repeat margin) (range))
+        bottom      (- h margin)
+        candidates  (remove #(= % @central-feature) (keys @entities))
+        w           (if (= orientation :v) w (- w margin))
+        h           (if (= orientation :h) h (- h margin))
+        ]
+    (println candidates)
+    (if (= orientation :h)
+      (do  ;horizontal orientation
+        (move-entity @central-feature margin 0)
+        (resize-entity @central-feature w h)
+        (doall (map move-entity candidates (repeat 0) marginseq))
+        (doall (map resize-entity candidates (repeat margin) (repeat margin)))
+        
+        )  
+      (do  ;vertical orientation
+        (move-entity @central-feature 0 0)
+        (resize-entity @central-feature w h)
+        (doall (map move-entity candidates marginseq (repeat bottom)))
+        (doall (map resize-entity candidates (repeat margin) (repeat margin)))
+        )))
+  
   )
+
+
 (comment
   (get-optimal-size 12 1367 770)
   (count @entities)
@@ -116,5 +143,10 @@
   (resize-entity "polarclock" 150 150)
   (to-dimension [1 :by 1])
   (.getWidth (config window/xyz :bounds))
+  (set-central-feature)
+  (layout-central-feature)
+  (println @central-feature)
+  (filter #(get-in %1 [1 :central-feature]) @entities)
+
   )
 

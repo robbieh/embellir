@@ -107,13 +107,12 @@
 (config window/xyz :items )
 (remove-entity "c2")
 (pprint  @entities)
-(load-entity "polarclock" {:placement [ :fullscreen] :sleepms 1000} )
+(load-entity "polarclock" {:placement [ :fullscreen] :sleepms 1000
+                           :central-feature true } )
 (remove-entity "polarclock")
 (remove-entity "ipviz")
 (load-entity "ipviz" {:placement [ :fullscreen] :sleepms 1000
-                      :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
-                      
-                      } )
+                      :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523" } )
 (do  (config! window/xyz :items nil)
      (reset! entities {}))
 (get entities "circle")
