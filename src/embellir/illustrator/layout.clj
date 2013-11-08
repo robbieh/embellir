@@ -131,9 +131,7 @@
         (doall (map move-entity candidates marginseq (repeat bottom)))
         (doall (map resize-entity candidates (repeat margin) (repeat margin)))
         )))
-  
   )
-
 
 (comment
   (get-optimal-size 12 1367 770)

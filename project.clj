@@ -12,6 +12,8 @@
                            [org.clojure/math.numeric-tower "0.0.2"]
                            [server-socket "1.0.0"]
                            [ipviz "0.1.0-SNAPSHOT"]
+                           [org.clojure/data.json "0.2.3"]
+                           [cjdnsadmin-clj "0.1.0-SNAPSHOT"]
                            ]
             ;  :profiles {:dev {:dependencies [[clj-ns-browser "1.3.0"]]}}
             :warn-on-reflection true

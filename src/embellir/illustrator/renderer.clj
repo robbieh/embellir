@@ -18,8 +18,10 @@
         )
   )
 
+(def collection {})
 
-
+(defn run-item [])
+(defn queue-item [])
 
 (defn stoptest []
   (config! window/xyz :items nil)
@@ -68,6 +70,13 @@
 (def repaint-thread (Thread. repaint-loop))
 (.start repaint-thread)
 
+(comment
+  (println continue-rendering?) 
+  (println continue-repainting?) 
+  (println (.getState render-thread))
+  (println (.getState repaint-thread))
+  
+  )
 
 
 
@@ -78,14 +87,14 @@
   (java.util.concurrent.PriorityBlockingQueue. 5 updateq-comparator))
 
 
-(comment defn queue-entity [entityname itemname]
+(defn queue-entity [entityname itemname]
     (.put updateq {:entity itemname
                    :time (clj-time.coerce/to-date-time
                            (+ 
                              (get-in @collection [itemname :time-to-live])
                              (clj-time.coerce/to-long (clj-time.local/local-now))))}))
 
-(comment defn render-item [itemname]
+(defn render-item [itemname]
   "Fetch the item from @collection 
   Then apply the item's :function to the item's :atom"
   (let [item (get @collection itemname)
@@ -93,7 +102,7 @@
         itemfunc (:function item)]
     (swap! itematom itemfunc)))
 
-(comment defn render-loop []
+(defn render-loop []
   (loop [item (.take ^java.util.concurrent.PriorityBlockingQueue updateq)]
     ;    (println "found item: " item (get item :collection-key))
     (try
