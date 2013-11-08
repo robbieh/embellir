@@ -20,6 +20,9 @@
 ;
 (def private-data (atom {}))
 
+(defn resolve-ip [ip6]
+  (.getCanonicalHostName (java.net.Inet6Address/getByName ip6)))
+
 (defn fetch-ip-img [ip6 size]
   (let [img (draw-ip-polygon ip6 {:size size}) ]
     (swap! private-data assoc-in [:imgcache ip6 size] img)
@@ -66,15 +69,17 @@
    (push graphics 
          (translate graphics halfsize halfsize)
          (doseq [i (range peerct)]
-           (let [xy     (radian-to-xy (* i peerrad) ringdia)
-                 peer   (nth peerlist i)
-                 peerip (cjd/public-to-ip6  (get peer   "publicKey"))
-                 img  (get-ip-img peerip ipdia)
+           (let [xy       (radian-to-xy (* i peerrad) ringdia)
+                 peer     (nth peerlist i)
+                 peerip   (cjd/public-to-ip6  (get peer   "publicKey"))
+                 peername (resolve-ip peerip)
+                 img      (get-ip-img peerip ipdia)
                  ]
              (draw graphics (linexy [0 0] xy )                  s4 )
              (push graphics
                (translate graphics (first xy) (last xy))
                 (draw-image-at-xy graphics img [(- ipradius)  (- ipradius)] ) 
+                (.drawString graphics (String. peername) (int (- ipradius)) (int ipradius))
                    )
              )
            )
@@ -83,3 +88,9 @@
     )
   ))
 
+(comment
+  (java.net.Inet6Address/getByName "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523")
+  (println @private-data)
+  (resolve-ip "fcd4:eeaf:b23e:8c9:ab84:d0cf:3f64:c55d")
+
+  )

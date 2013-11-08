@@ -1,7 +1,5 @@
 (ns embellir.curios.cjdnspeers
-  (:require  
-            [cjdnsadmin-clj.core :as cjd :only [request]]
-            )
+  (:require  [cjdnsadmin-clj.core :as cjd :only [request]])
   )
 
 ;{:name "weather" 
