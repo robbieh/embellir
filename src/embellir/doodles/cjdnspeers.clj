@@ -16,7 +16,9 @@
      [clj-time.local]) 
   )
 
-; {:imgcache {"ip" {size img, size img, ...}}
+; {:imgcache {"ip" {size img, size img, ...}
+;  :iolast   {"ip" {:in x, :out y}}
+; }
 ;  
 ;
 (def private-data (atom {}))
@@ -42,15 +44,21 @@
 
 (defn queue-io-stats [ip6 bin bout]
   (let [peerioq (or (get @iostats ip6) (new-ioq))
+        iolast  (or (get-in @private-data [ip6 :iolast]) {:in 0 :out 0})
         peerio  (peek @peerioq )
-        previn  (:in peerio)
-        prevout (:out peerio)
-        retmap  {:in (- bin previn) :out (- bout prevout)}
+        previn  (:in iolast)
+        prevout (:out iolast)
+        diffmap  {:in (- bin previn) :out (- bout prevout)}
+        lastmap {:in bin :out bout}
         ]
-    (dosync (alter peerioq conj retmap) )
-    (dosync (alter peerioq pop) )
-    (swap! iostats assoc-in [ip6] peerioq )
-    retmap
+    (if (not (= (:in diffmap) 0)) 
+      (do
+;      (println ip6 diffmap lastmap)
+      (dosync (alter peerioq conj diffmap) )
+      (dosync (alter peerioq pop) )
+      (swap! iostats assoc-in [ip6] peerioq )
+      (swap! private-data assoc-in [ip6 :iolast] lastmap )))
+    lastmap
     )
   )
 
@@ -58,8 +66,8 @@
 (defn draw-io-part [graphics {:keys [in out]} i seg start]
   (push graphics 
     (draw graphics
-        (rect (+ start (* i seg)) 0, seg (- (Math/log in))) (style :foreground "lightgreen" :background "lightgreen")
-        (rect (+ start (* i seg)) 0, seg (Math/log out)) (style :foreground "lightgreen" :background "lightgreen")
+        (rect (+ start (* i seg)) 0, seg (- (Math/pow (Math/log10 in) 2))) (style :foreground "lightgreen" :background "lightgreen")
+        (rect (+ start (* i seg)) 0, seg (Math/pow (Math/log10 out) 2)) (style :foreground "lightgreen" :background "lightgreen")
           
           )
         )
@@ -153,5 +161,5 @@
   (get-io-delta "test" 2 2)
   (println @iostats)
   (magnitude 70)
-  ( log 10)
+  (Math/log10 8000)
   )
