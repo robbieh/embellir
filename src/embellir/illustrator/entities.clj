@@ -119,10 +119,9 @@
 (pprint  @entities)
 (do 
 (remove-entity "cjdnspeers")
-(load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 1000
+(load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 500
                            :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
                            }))
-
   )
 
 

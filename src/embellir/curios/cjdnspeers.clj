@@ -26,7 +26,7 @@
 
 (defn curation-map [] {:atom (atom (embellir.curios.cjdnspeers/setup-cjdns-peers))
                        :function embellir.curios.cjdnspeers/update-cjdns-peers
-                       :time-to-live (* 1000 60) ;every minute
+                       :time-to-live (* 1000 2) ;every few seconds
                        :receiver-function nil})
 
 

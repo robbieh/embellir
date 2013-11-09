@@ -17,8 +17,13 @@
   )
 
 ; {:imgcache {"ip" {size img, size img, ...}}
+;  
 ;
 (def private-data (atom {}))
+(def qmax 10)
+
+; {"ip" persistenQueue({:in x :out y},...), ...}
+(def iostats (atom {}))
 
 (defn resolve-ip [ip6]
   (.getCanonicalHostName (java.net.Inet6Address/getByName ip6)))
@@ -27,6 +32,47 @@
   (let [img (draw-ip-polygon ip6 {:size size}) ]
     (swap! private-data assoc-in [:imgcache ip6 size] img)
   img))
+
+(defn new-ioq []
+  (let [q (ref clojure.lang.PersistentQueue/EMPTY)
+        qlist (repeat qmax {:in 0 :out 0} )
+        ]
+    (dosync (alter q (partial apply conj) qlist) )
+  q))
+
+(defn queue-io-stats [ip6 bin bout]
+  (let [peerioq (or (get @iostats ip6) (new-ioq))
+        peerio  (peek @peerioq )
+        previn  (:in peerio)
+        prevout (:out peerio)
+        retmap  {:in (- bin previn) :out (- bout prevout)}
+        ]
+    (dosync (alter peerioq conj retmap) )
+    (dosync (alter peerioq pop) )
+    (swap! iostats assoc-in [ip6] peerioq )
+    retmap
+    )
+  )
+
+
+(defn draw-io-part [graphics {:keys [in out]} i seg start]
+  (push graphics 
+    (draw graphics
+        (rect (+ start (* i seg)) 0, seg (- (Math/log in))) (style :foreground "lightgreen" :background "lightgreen")
+        (rect (+ start (* i seg)) 0, seg (Math/log out)) (style :foreground "lightgreen" :background "lightgreen")
+          
+          )
+        )
+      )
+
+(defn draw-io-line [graphics ip6 length start]
+  (let [peerioq @(get @iostats ip6)
+        lineseg (/ (- length start) qmax)
+        ]
+    (doall (map #(draw-io-part graphics %1 %2 lineseg start) peerioq (range qmax )))
+    )
+  )
+
 
 (defn get-ip-img [ip6 size]
   (or
@@ -39,6 +85,7 @@
   [(* radius  (Math/cos d))  (* radius  (Math/sin d))])
 (defn draw-image-at-xy [graphics img xy]
    (.drawImage graphics ^java.awt.Image img (int (first xy)) (int (last xy))  nil))
+
 
 (defn draw-doodle [entname ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
   (let [sizex     (.getWidth panel)
@@ -72,15 +119,24 @@
            (let [xy       (radian-to-xy (* i peerrad) ringdia)
                  peer     (nth peerlist i)
                  peerip   (cjd/public-to-ip6  (get peer   "publicKey"))
+                 bytesin  (get peer "bytesIn")
+                 bytesout (get peer "bytesOut")
                  peername (resolve-ip peerip)
                  img      (get-ip-img peerip ipdia)
                  ]
+             (queue-io-stats peerip bytesin bytesout)
              (draw graphics (linexy [0 0] xy )                  s4 )
              (push graphics
                (translate graphics (first xy) (last xy))
                 (draw-image-at-xy graphics img [(- ipradius)  (- ipradius)] ) 
-                (.drawString graphics (String. peername) (int (- ipradius)) (int ipradius))
-                   )
+                (.drawString graphics (String. peername) (int (- ipradius)) (int ipradius)))
+             (push graphics
+               (.rotate graphics (* i peerrad))
+               (draw-io-line graphics peerip (- ringdia ipradius ) ipradius)
+                   
+             )
+               ;(.drawString graphics (str (:in iodelta)) (int (- ipradius)) (int (+ 20 ipradius)))
+                   
              )
            )
          (draw-image-at-xy graphics hostimg [ (- ipradius) (- ipradius) ])
@@ -90,7 +146,12 @@
 
 (comment
   (java.net.Inet6Address/getByName "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523")
-  (println @private-data)
+  (println (:iostats @private-data))
   (resolve-ip "fcd4:eeaf:b23e:8c9:ab84:d0cf:3f64:c55d")
-
+  (seq @(get @iostats "fcdb:158c:ef6c:dfea:000f:bd01:a738:895f" ))
+  (seq @(new-ioq))
+  (get-io-delta "test" 2 2)
+  (println @iostats)
+  (magnitude 70)
+  ( log 10)
   )
