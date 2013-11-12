@@ -6,6 +6,8 @@
   (:require 
      [embellir.illustrator.screen :as screen]
      [embellir.illustrator.window :as window]
+     [embellir.illustrator.renderer :as renderer]
+            [seesaw.timer :as timer]
      
      )
   (:use seesaw.core
@@ -59,7 +61,8 @@
              canvas (canvas :background (color 0 0 0 0) :bounds bounds
                             :paint paintfn)
              sleepms' (if sleepms sleepms 1000)
-             entmap (conj params {:canvas canvas :sleepms sleepms'})
+             t (timer (partial renderer/repaint-entity itemname ) :repeats? true :delay sleepms')
+             entmap (conj params {:canvas canvas :sleepms sleepms' :timer t})
              ]
          (.setOpaque canvas false)
          (swap! entities #(-> % (assoc itemname entmap)))
