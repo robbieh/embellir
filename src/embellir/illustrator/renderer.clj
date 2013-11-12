@@ -67,8 +67,8 @@
     (Thread/sleep 1000)
     )
   )
-(def repaint-thread (Thread. repaint-loop))
-(.start repaint-thread)
+;(def repaint-thread (Thread. repaint-loop))
+;(.start repaint-thread)
 
 (comment
   (println continue-rendering?) 

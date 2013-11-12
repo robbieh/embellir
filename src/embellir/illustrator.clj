@@ -16,9 +16,6 @@
   )
 
 
-;        (def xyz (seesaw/xyz-panel :background "#000"))
-;        (def f (seesaw/frame :title "embellir" :width 500 :height 500 :content xyz :visible? true ) )
-
 (defn start-illustrator []
 
 ;  (.start (Thread. sysloop))
