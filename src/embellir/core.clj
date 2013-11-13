@@ -9,11 +9,13 @@
   )
 
 
-(comment defn read-config-file [filename]
+(defn read-config-file [filename]
   (with-open [rd (io/reader filename)]
     (doseq [line (line-seq rd)]
       (bitdock/handle-command line)))
-  (embellir.illustrator.systems/relayout))
+;  (embellir.illustrator.systems/relayout)
+         
+         )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -26,11 +28,17 @@
 
 
 (defn main [& args]
-  (when (.exists (File. ^String (first args)))
-    (comment read-config-file (first args)))
+  (when 
+          
+          (.exists (File. (str (System/getenv "HOME") "/.embellirrc")) )
+          ;(.exists (File. ^String (first args)) )
+          
+    (read-config-file (str (System/getenv "HOME") "/.embellirrc"))
+    
+    )
 
   ; start the illustrator
-  (illustrator/start-illustrator)
+;  (illustrator/start-illustrator)
   nil
   )
 

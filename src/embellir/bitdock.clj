@@ -53,9 +53,11 @@
   )
 
 (defn illustrate [data]
-  (doseq [item (str/split data #" ")]
-    (println "illustrating: " item)
-    (comment embellir.illustrator.systems/load-entity item))
+  (let [[item remainder] (str/split data #" " 2)
+        remainder (if (empty? remainder) nil (read-map remainder))
+        ]
+    (println "illustrating:" item "with" remainder)
+    (embellir.illustrator.entities/load-entity item remainder))
   )
 
 (def cmd-map { "supply" supply

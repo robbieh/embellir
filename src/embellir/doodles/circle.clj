@@ -7,7 +7,7 @@
     seesaw.graphics
     seesaw.color
     embellir.illustrator.util
-    [embellir.illustrator.entities :only [entities]]
+    [embellir.illustrator.entitylist :only [entities]]
     )
   (:require 
      [clj-time.core :as clj-time]
@@ -17,7 +17,7 @@
 (def private-data (atom {}))
 
 (defn draw-doodle [entname ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
-
+  (println entname)
   (let [sizex (.getWidth panel)
         sizey (.getHeight panel)
         ;d (:diameter @private-data)

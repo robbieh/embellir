@@ -7,7 +7,7 @@
      seesaw.graphics
      seesaw.color
      [seesaw.util :only [to-dimension]]
-     [embellir.illustrator.entities :only [entities]]
+     [embellir.illustrator.entitylist :only [entities]]
      )
   )
 

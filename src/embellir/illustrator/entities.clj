@@ -13,25 +13,9 @@
   (:use seesaw.core
      seesaw.graphics
      seesaw.color
+     [embellir.illustrator.entitylist :only [entities]]
      )
   )
-
-; entities is a map of maps
-; name is the main map key
-; map should contain a minimum of :function and :peroid, or a :threadfn
-; :function - fn to update g2d object, or nil if entity handles its own thread
-; :sleepms  - how many ms to sleep between updates?
-; :next-time - time at which it should next run
-; :threadfn - fn that will be run in a thread
-; :frame    - the image object
-;
-; { "circle" {:function embellir.doodles.circle/draw-circle
-;             :period 1000
-;             }
-;   "clock"  {...}}
-;   
-
-(defonce entities (atom {}))
 (def base-entity-map {:frame nil
                       :buffer nil
                       :x 0
@@ -49,8 +33,11 @@
   ;resolve entity function
   ;create canvas with those attributes and overriden :paint
  (let [fqi (str "embellir.doodles." doodlename)
+       placement (or placement [:fullscreen])
        bounds (screen/placement placement)
        entname' (if entname entname doodlename)
+       sleepms (or sleepms 1000)
+       params (or params {})
        ]
    (load-file (str "src/embellir/doodles/" doodlename ".clj"))
    (if (find-ns (symbol fqi))
@@ -60,10 +47,10 @@
              paintfn (partial @func itemname)
              canvas (canvas :background (color 0 0 0 0) :bounds bounds
                             :paint paintfn)
-             sleepms' (if sleepms sleepms 1000)
-             t (timer (partial renderer/repaint-entity itemname ) :repeats? true :delay sleepms')
-             entmap (conj params {:canvas canvas :sleepms sleepms' :timer t})
+             t (timer (partial renderer/repaint-entity itemname ) :repeats? true :delay sleepms :start? false)
+             entmap (conj params {:canvas canvas :sleepms sleepms :timer t})
              ]
+         (.start t)
          (.setOpaque canvas false)
          (swap! entities #(-> % (assoc itemname entmap)))
          (config! window/xyz :items (conj (config window/xyz :items) canvas))
@@ -76,9 +63,9 @@
 
 (defn remove-entity [entname]
   (let [canvas (get-in @entities [entname :canvas])]
-    (println (config window/xyz :items))
-    (println canvas)
-    (println (remove #(= % canvas) (config window/xyz :items)))
+    ;(println (config window/xyz :items))
+    ;(println canvas)
+    ;(println (remove #(= % canvas) (config window/xyz :items)))
     (config! window/xyz :items (remove #(= % canvas) (config window/xyz :items)))
     (swap! entities dissoc entname)
     )
@@ -87,6 +74,7 @@
 (comment 
 (assoc {:a 1 } )
 (load-entity "circle" {:placement [ :fullscreen] :sleepms 2000 :color "aqua"} )
+(load-entity "circle" nil)
 (remove-entity "circle")
 (load-entity "circle" {:placement [10 10 150 150 ] :sleepms 2000 :entname "c2"} )
 (load-entity "circle" {:placement [10 10 150 150 ] :sleepms 1000 :entname "c3"} )

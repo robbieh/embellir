@@ -5,14 +5,13 @@
            ) 
   (:require [seesaw.core :as seesaw]
             [seesaw.timer :as timer]
-     [embellir.illustrator.entities]
      )
   (:use 
         seesaw.core
         seesaw.graphics
         seesaw.color
         embellir.illustrator.util 
-        [embellir.illustrator.entities :only [entities]] 
+        [embellir.illustrator.entitylist :only [entities]] 
         )
   )
 
@@ -29,8 +28,7 @@
   (let [{:keys [canvas sleepms timer]} (get @entities entname) 
         d (.getDelay timer)
         ]
-;    (println "painting: " entname)
-      (repaint! canvas) 
+    (repaint! canvas) 
     (if (not (= d sleepms)) (.setDelay timer sleepms))
        
    ) 

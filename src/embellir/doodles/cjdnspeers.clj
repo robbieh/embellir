@@ -7,7 +7,7 @@
     seesaw.graphics
     seesaw.color
     embellir.illustrator.util
-    [embellir.illustrator.entities :only [entities]]
+    [embellir.illustrator.entitylist :only [entities]]
     [embellir.curator :only [get-curio]]
     )
   (:require 
