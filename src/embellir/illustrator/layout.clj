@@ -12,24 +12,8 @@
   )
 
 
-;; can I use swing? probably not easily...
-;;
-;; What do I need?
-;; Different schemes for laying out doodles
-;; and differente classes of doodles
-;;
 ;; hard cases:
 ;; * doodles which "hold" and manage other doodles ...
-;;
-;; grid layout
-;;
-;; assume each entity is a square
-;; n entities
-;; screen x by y
-;; from 1 to n:
-;; size of squares when all one column? (min x/1, y/n-0)
-;;                    when two columns? (min x/2, y/n-1)
-;;                               three? (min x/3, y/n-2)
 ;;
 
 (defn move-entity [entname x y]

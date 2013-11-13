@@ -8,7 +8,6 @@
      [embellir.illustrator.window :as window]
      [embellir.illustrator.renderer :as renderer]
             [seesaw.timer :as timer]
-     
      )
   (:use seesaw.core
      seesaw.graphics
@@ -16,17 +15,8 @@
      [embellir.illustrator.entitylist :only [entities]]
      )
   )
-(def base-entity-map {:frame nil
-                      :buffer nil
-                      :x 0
-                      :y 0
-                      :sleepms 1000
-                      :next-time 0
-                      })
 
 (defn uniquename [n] n) ;TODO: check entity list
-
-
 
 (defn load-entity [doodlename {:keys [placement sleepms entname] :as params} ]
   ;determine size, position
