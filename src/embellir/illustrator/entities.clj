@@ -7,7 +7,7 @@
      [embellir.illustrator.screen :as screen]
      [embellir.illustrator.window :as window]
      [embellir.illustrator.renderer :as renderer]
-            [seesaw.timer :as timer]
+     [seesaw.timer :as timer]
      )
   (:use seesaw.core
      seesaw.graphics
@@ -99,6 +99,8 @@
 (config window/xyz :items )
 (pprint  @entities)
 (do 
+(remove-entity "ip4map")
+(load-entity "ip4map" {})
 (remove-entity "cjdnspeers")
 (load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 500
                            :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
