@@ -5,7 +5,7 @@
                       :url "http://www.eclipse.org/legal/epl-v10.html"}
             :dependencies [[org.clojure/clojure "1.4.0"]
                            [seesaw "1.4.2"]
-                           [clj-time "0.4.4"]
+                           [clj-time "0.6.0"]
                            [the/parsatron "0.0.3"]
                            [org.clojure/data.xml "0.0.6"]
                            [org.clojure/data.zip "0.1.1"]

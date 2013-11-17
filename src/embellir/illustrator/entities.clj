@@ -100,9 +100,10 @@
 (pprint  @entities)
 (do 
 (remove-entity "ip4map")
-(load-entity "ip4map" {})
+(load-entity "ip4map" {:sleepms 5000})
+(do (remove-entity "ip4plaid") (load-entity "ip4plaid" {:sleepms 5000}))
 (remove-entity "cjdnspeers")
-(load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 500
+(load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 2000
                            :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
                            }))
   )

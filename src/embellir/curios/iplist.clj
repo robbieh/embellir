@@ -28,17 +28,22 @@
   [ipdata rmap] 
   (let [now (clj-time.local/local-now)
         dmap (update-values rmap conj {:last-seen now})
-        cmap (into {} (for [[k v] (merge ipdata dmap)] 
+        dmap (into {} (for [[k v] dmap] 
                         (let [x (get-in ipdata [k :count] 0 )]
                            [k (assoc v :count (inc x))])
                         ))
         ]
     
     
-    cmap)
+    (merge ipdata dmap))
   )
 
 (defn curation-map [] {:atom (atom   {})
                        :function embellir.curios.iplist/update-iplist
                        :time-to-live (* 1000 20) ;every few seconds
                        :receiver-function embellir.curios.iplist/receive-iplist})
+
+(comment
+  (embellir.curator/trash-curio "iplist")
+  (embellir.curator/curate "iplist")
+  )
