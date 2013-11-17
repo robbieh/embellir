@@ -57,7 +57,7 @@
                           :else 0.95))))))
 
 (defn count-to-alpha [c]
-  (max 15 (min c 255))
+  (max 120 (min c 255))
   )
 
 
@@ -161,10 +161,10 @@
                  ipcolor      (age-to-color lastseen now)
                  ipacolor     (apply color (conj ipcolor alpha))
                  s            (style :foreground ipacolor
-;                                     :background (color ipcolor alpha)
+                                     :background ipacolor
                                      )
                  ]
-;            (println ip ipnum x y)
+;            (println ip ipnum ipacolor alpha)
 ;            (if (= (.toString ip) "/127.0.0.1") (println alpha))
             (draw graphics (rect 0 (- y 1) sizex 2) s )
             (draw graphics (rect (- x 1) 0 2 sizey) s )
