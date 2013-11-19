@@ -42,7 +42,7 @@
   ;60 s - yellow
   ;60m - green
    (let [age-seconds (clj-time/in-secs (clj-time/interval then now)) ]
-     (cond (< age-seconds 60) (blend-colors [255 0 0] [255 255 0] ( / (max  age-seconds 1) 120))
+     (cond (< age-seconds 120) (blend-colors [255 0 0] [255 255 0] ( / (max  age-seconds 1) 120))
            (< age-seconds (* 60 10)) (blend-colors [255 255 0] [0 255 0] (/ age-seconds 600))
            :else [0 255 0]
 )))
@@ -166,8 +166,8 @@
                  ]
 ;            (println ip ipnum ipacolor alpha)
 ;            (if (= (.toString ip) "/127.0.0.1") (println alpha))
-            (draw graphics (rect 0 (- y 1) sizex 2) s )
-            (draw graphics (rect (- x 1) 0 2 sizey) s )
+            (draw graphics (rect 0 (- y 1) sizex 5) s )
+            (draw graphics (rect (- x 1) 0 5 sizey) s )
              
              )
            )

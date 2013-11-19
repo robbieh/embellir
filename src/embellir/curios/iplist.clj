@@ -45,5 +45,6 @@
 
 (comment
   (embellir.curator/trash-curio "iplist")
+  (embellir.curator/get-curio "iplist")
   (embellir.curator/curate "iplist")
   )
