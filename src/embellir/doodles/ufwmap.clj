@@ -1,4 +1,4 @@
-(ns embellir.doodles.ip4plaid
+(ns embellir.doodles.ufwmap
   (:import 
      ;      java.awt.AlphaComposite
      )
@@ -166,11 +166,8 @@
                  ]
 ;            (println ip ipnum ipacolor alpha)
 ;            (if (= (.toString ip) "/127.0.0.1") (println alpha))
-            ;(draw graphics (rect 0 (- y 1) sizex 10) s )
-            ;(draw graphics (rect (- x 1) 0 10 sizey) s )
-;            (draw graphics (circle x y 10) s )
-            (draw graphics (rect (- x 10) (- y 10) 20 20 ) s )
-            
+            (draw graphics (rect 0 (- y 1) sizex 5) s )
+            (draw graphics (rect (- x 1) 0 5 sizey) s )
              
              )
            )

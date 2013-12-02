@@ -20,9 +20,54 @@
 ;  :iolast   {"ip" {:in x, :out y}}
 ; }
 ;  
+; count: color
+; oldness: fade
 ;
 (def private-data (atom {}))
 (def qmax 10)
+
+(defn blend-colors [c1 c2 pct]
+  (let [
+        r (min 255 (int (+ (min (nth c1 0) (nth c2 0)) (* pct (Math/abs (- (nth c1 0) (nth c2 0)) )))))
+        g (min 255 (int (+ (min (nth c1 1) (nth c2 1)) (* pct (Math/abs (- (nth c1 1) (nth c2 1)) )))))
+        b (min 255 (int (+ (min (nth c1 2) (nth c2 2)) (* pct (Math/abs (- (nth c1 2) (nth c2 2)) )))))
+        ]
+    [r g b]
+    )
+  )
+(def c1 [0 255 0]) ;green
+(def c2 [255 0 0]) ;red
+(defn age-to-color [then now]
+  ;now - red
+  ;60 s - yellow
+  ;60m - green
+     (comment cond (< age-seconds 60) [255 0 0]
+           (< age-seconds 120) [255 255 0]
+           (< age-seconds 300) [0 255 0]
+           :else [0 0 50]
+           )
+
+   (let [age-seconds (clj-time/in-secs (clj-time/interval then now)) ]
+     (cond (< age-seconds 60) (blend-colors [255 0 0] [255 255 0] ( / (max  age-seconds 1) 60))
+           (< age-seconds 600) (blend-colors [255 255 0] [0 255 0] (/ age-seconds 600))
+           :else [0 255 0 ])
+     
+     ))
+(defn age-to-alpha [then now]
+     ;minute old? alpha 0%
+     ;hour old? 50%
+     ;day old? alpha 95%
+     (let [age (clj-time/in-minutes (clj-time/interval then now))]
+       (int (- 255 (* 255 (cond (< age 1) 0
+                          (< age 60) (- 0.8 (/ age 60 2))
+                          (< age 1440) (- 0.8  (/ age 1440 2))
+                          :else 0.95))))))
+
+(defn count-to-alpha [c]
+  (max 120 (min c 255))
+  )
+
+
 
 ; {"ip" persistenQueue({:in x :out y},...), ...}
 (def iostats (atom {}))
@@ -96,7 +141,8 @@
 
 
 (defn draw-doodle [entname ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
-  (let [sizex     (.getWidth panel)
+  (let [now       (clj-time.local/local-now)
+        sizex     (.getWidth panel)
         sizey     (.getHeight panel)
         size      (min sizex sizey)
         ipsizex   (/ 65025 sizex)
@@ -105,18 +151,33 @@
         ips       (get-curio "iplist") 
         s1        (style :foreground (color :green 128) :background (color :green 192)) 
         ] 
+;    (println "age 127.0.0.1" (age-to-alpha (get-in ips ["127.0.0.1" :last-seen]) now))
    (push graphics 
 ;         (translate graphics halfsize halfsize)
          (doseq [[ip flags] ips]
-           (let [ ip           (java.net.Inet4Address/getByName ip)
+           (let [ip           (java.net.Inet4Address/getByName ip)
                  ipnum        (new BigInteger 1 (.getAddress ip))
                  ipx          (Math/round (double (if (= 0 ipnum) 0.0 (mod ipnum 65025))))
                  ipy          (Math/round (double (/ ipnum 65025)))
                  x            (/ ipx ipsizex)
                  y            (/ ipy ipsizey)
+                 lastseen     (:last-seen flags)
+                 c            (:count flags)
+                 ;alpha        (age-to-alpha lastseen now)
+                 alpha        (count-to-alpha c)
+                 ipcolor      (age-to-color lastseen now)
+                 ipacolor     (apply color (conj ipcolor alpha))
+                 s            (style :foreground ipacolor
+                                     :background ipacolor
+                                     )
                  ]
-;            (println ip ipnum x y)
-            (draw graphics (circle x y 3) s1 )
+;            (println ip ipnum ipacolor alpha)
+;            (if (= (.toString ip) "/127.0.0.1") (println alpha))
+            ;(draw graphics (rect 0 (- y 1) sizex 10) s )
+            ;(draw graphics (rect (- x 1) 0 10 sizey) s )
+;            (draw graphics (circle x y 10) s )
+            (draw graphics (rect (- x 5) (- y 5) 10 10 ) s )
+            
              
              )
            )
@@ -128,4 +189,6 @@
   ))
 
 (comment
+  (get-in  (get-curio "iplist") ["127.0.0.1" :last-seen])
+  
   )

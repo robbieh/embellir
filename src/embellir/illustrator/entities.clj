@@ -22,7 +22,7 @@
   ;determine size, position
   ;resolve entity function
   ;create canvas with those attributes and overriden :paint
- (let [fqi (str "embellir.doodles." doodlename)
+ (let [fqi (str "embellir.doodles." (clojure.string/replace doodlename "/" ".")) ;this lets the code handle format like "category/subcategory/doodle"
        placement (or placement [:fullscreen])
        bounds (screen/placement placement)
        entname' (if entname entname doodlename)
@@ -46,6 +46,7 @@
          (config! window/xyz :items (conj (config window/xyz :items) canvas))
          )
        )
+     (println "could not find namespace from " (symbol fqi))
      )
    ) 
   )
@@ -86,26 +87,24 @@
 (type embellir.doodles.circle/draw-doodle)
 (config! window/xyz :items (dissoc (config window/xyz :items) canvas))
 (remove-entity "c2")
-(load-entity "polarclock" {:placement [ :fullscreen] :sleepms 1000
-                           :central-feature true } )
-(remove-entity "polarclock")
+(do (remove-entity "polarclock")
+    (load-entity "polarclock" {:placement [ :fullscreen] :sleepms 10000
+                           :central-feature true } ))
 (remove-entity "ipviz")
 (get entities "circle")
 (load-entity "ipviz" {:placement [ :fullscreen] :sleepms 1000
                       :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523" } )
-(do  (config! window/xyz :items nil)
-     (reset! entities {}))
-
+(do  (config! window/xyz :items nil) (reset! entities {})) ;reset it all!!!!!!!!
 (config window/xyz :items )
 (pprint  @entities)
-(do 
-(remove-entity "ip4map")
-(load-entity "ip4map" {:sleepms 5000})
+
+(do (remove-entity "christmas/boxes") (load-entity "christmas/boxes" {:sleepms 5000}))
+(do (remove-entity "ip4map") (load-entity "ip4map" {:sleepms 2000}))
 (do (remove-entity "ip4plaid") (load-entity "ip4plaid" {:sleepms 5000}))
 (remove-entity "cjdnspeers")
 (load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 2000
                            :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
-                           }))
+                           })
   )
 
 
