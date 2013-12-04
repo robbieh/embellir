@@ -40,8 +40,8 @@
              t (timer (partial renderer/repaint-entity itemname ) :repeats? true :delay sleepms :start? false)
              entmap (conj params {:canvas canvas :sleepms sleepms :timer t})
              ]
-         (.start t)
-         (.setOpaque canvas false)
+         (.start ^javax.swing.Timer t)
+         (.setOpaque ^javax.swing.JPanel canvas false)
          (swap! entities #(-> % (assoc itemname entmap)))
          (config! window/xyz :items (conj (config window/xyz :items) canvas))
          )
@@ -98,16 +98,22 @@
 (config window/xyz :items )
 (pprint  @entities)
 
-(do (remove-entity "christmas/boxes") (load-entity "christmas/boxes" {:sleepms 5000}))
+(.getDelay  (get-in @entities  [ "christmas/boxes" :timer]))
+(swap! entities assoc-in  ["christmas/boxes" :sleepms] 250)
+(do (remove-entity "christmas/boxes") (load-entity "christmas/boxes" {:sleepms 500}))
 (do (remove-entity "ip4map") (load-entity "ip4map" {:sleepms 2000}))
 (do (remove-entity "ip4plaid") (load-entity "ip4plaid" {:sleepms 5000}))
 (remove-entity "cjdnspeers")
 (load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 2000
                            :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
                            })
-  )
+  
 
-
+(let [c (get-in @entities ["christmas/boxes" :canvas])]
+;  (.paintImmediately c (.getBounds c))
+  (.setBackground ^javax.swing.JPanel c (color "white"))
+  (.update ^javax.swing.JPanel c (.getGraphics ^javax.swing.JPanel c) )
+  ))
 
 
 

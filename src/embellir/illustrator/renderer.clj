@@ -26,10 +26,15 @@
   ; :next-time according to :sleepms
   ;
   (let [{:keys [canvas sleepms timer]} (get @entities entname) 
-        d (.getDelay timer)
+        d (.getDelay ^javax.swing.Timer timer)
         ]
-    (repaint! canvas) 
-    (if (not (= d sleepms)) (.setDelay timer sleepms))
+    (repaint! ^javax.swing.JPanel canvas) 
+    
+;    (.setBackground ^javax.swing.JPanel canvas (color "black"))
+;    (.update ^javax.swing.JPanel canvas (.getGraphics ^javax.swing.JPanel canvas))
+    ;(.paintImmediately ^javax.swing.JPanel canvas (.getBounds  ^javax.swing.JPanel canvas))
+   
+    (if (not (= d sleepms)) (.setDelay ^javax.swing.Timer timer sleepms))
        
    ) 
   )
