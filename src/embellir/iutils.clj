@@ -29,3 +29,7 @@
   ([x y w h start extent]
    (iarc x y w h start extent java.awt.geom.Arc2D/OPEN)))
 
+(defn hex
+  "draw a hexagon"
+  []
+  )

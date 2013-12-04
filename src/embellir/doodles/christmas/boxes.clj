@@ -1,3 +1,4 @@
+
 (ns embellir.doodles.christmas.boxes
   (:use 
     seesaw.graphics
@@ -6,25 +7,38 @@
     [embellir.illustrator.entitylist :only [entities]]
     [embellir.curator :only [get-curio]]
     )
-  (:require [clojure.walk :as walk])
+  (:require [clojure.walk :as walk]
+            [clj-time.core :as clj-time]
+            [clj-time.local])
   )
 
-(def thickness 10)
+(def thickness 3)
 ;(def private-data (atom {}))
+
+(defn time-to-pct [[tgttime duration tgtpct]]
+  (let [now     (clj-time.local/local-now)]
+    (if (clj-time/after? now tgttime) 
+      1 ; - returning here! -
+      (let [i (clj-time/in-secs (clj-time/interval now tgttime))]
+        (- 1 (/ i duration))
+        )
+      )
+    ))
+
+
+(defn container [])
+
 
 (defn vcontainer "split into left and right components"
   [graphics x y w h & [percent fna fnb]]
-  (let [;x (+ x thickness)
-        ;y (+ y thickness)
-        ;w (- w (* 2 thickness))
-        ;h (- h (* 2 thickness))
+  (let [p  (if (vector? percent) (* (time-to-pct percent) (nth percent 2) ) percent)
         xa x
         ya y
-        wa (* percent w)
+        wa (* p w)
         ha h
         xb (+ x wa)
         yb y
-        wb (* (- 1 percent) w)
+        wb (* (- 1 p) w)
         hb h
         ]
     ((first fna) graphics xa ya wa ha (rest fna))
@@ -35,18 +49,15 @@
 
 (defn hcontainer "split into top and bottom components"
   [graphics x y w h & [percent fna fnb]]
-  (let [;x (+ x thickness)
-        ;y (+ y thickness)
-        ;w (- w (* 2 thickness))
-        ;h (- h (* 2 thickness))
+  (let [p  (if (vector? percent) (* (time-to-pct percent) (nth percent 2)) percent)
         xa x
         ya y
         wa w
-        ha (* percent h)
+        ha (* p h)
         xb x
         yb (+ y ha)
         wb w
-        hb (* (- 1 percent) h)
+        hb (* (- 1 p) h)
         ]
     ((first fna) graphics xa ya wa ha (rest fna))
     ((first fnb) graphics xb yb wb hb (rest fnb))
@@ -65,6 +76,27 @@
 (def s-white (style :background "white"))
 (def s-red (style :background "red"))
 (def s-green (style :background "green"))
+(def s-black (style :background "black"))
+(def speed (atom 5))
+(defn colorbox [graphics x y w h & more]
+  (let [x (+ x thickness)
+        y (+ y thickness)
+        w (- w (* 2 thickness))
+        h (- h (* 2 thickness))
+        s (style :background (first (first more)))
+        ]
+   (draw graphics (rect x y w h) s))
+  [colorbox (first (first more))]
+  )
+
+(defn blackbox [graphics x y w h & more]
+  (let [x (+ x thickness)
+        y (+ y thickness)
+        w (- w (* 2 thickness))
+        h (- h (* 2 thickness))]
+   (draw graphics (rect x y w h) s-black ))
+  [blackbox]
+  )
 
 (defn whitebox [graphics x y w h & more]
   (let [x (+ x thickness)
@@ -95,8 +127,11 @@
 
 (defn reindeer [graphics x y w h & more] )
 
-(def random-box-list [whitebox redbox greenbox])
+(def random-box-list [blackbox blackbox whitebox redbox greenbox])
 (defn pick-random-box [] (rand-nth random-box-list))
+(defn random-color-box [] 
+  [colorbox (rand-nth ["red" "darkred" "green" "darkgreen" "white" "black"])])
+
 (defn pick-random-orientation []  (rand-nth [:h :v]))
 
 ;(def boxtree (atom [(pick-random-box)]))
@@ -106,11 +141,18 @@
                             [container :v 0.4 [container :h 0.2 [whitebox] [redbox]] [greenbox]]]]
                     ))
 (def boxtree (atom [(pick-random-box)]))
-
+(defn create-container [item]
+  (let [duration @speed]
+    [container (pick-random-orientation) 
+                 [(clj-time/plus (clj-time.local/local-now) (clj-time/secs duration)) 
+                 duration 
+                 (+ 0.1 (rand 0.8)) ]
+               (random-color-box) item])
+  )
 (defn split-noncontainers [item]
-  (if (and (vector? item) (not (= container (first item))))
+  (if (and (vector? item) (fn? (first item)) (not (= container (first item))))
     ;[container (pick-random-orientation) (rand) [(pick-random-box)] item]
-    [container (pick-random-orientation) (+ 0.1 (rand 0.8)) [(pick-random-box)] item]
+    (create-container item)
     item))
 
 (defn merge-containers [item]
@@ -122,35 +164,82 @@
     item ))
 
 (defn chance-split [item]
-  (if (> 0.8 (rand))
+  (if (> 0.80 (rand))
     (split-noncontainers item)
     item))
 
 (defn chance-merge [item]
-  (if (> 0.2 (rand))
+  (if (> 0.20 (rand))
     (merge-containers item)
     item))
 
 (defn draw-doodle [entname ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
-  (let [sizex     (.getWidth panel)
-        sizey     (.getHeight panel)
+  (let [sizex     (double (.getWidth panel))
+        sizey     (double (.getHeight panel))
         ;ent       (get @entities entname)
         ] 
-    (do ((first @boxtree) graphics 0 0 sizex sizey (rest @boxtree)))
+    (do ((first @boxtree) graphics 0.0 0.0 sizex sizey (rest @boxtree)))
   ))
 
+(def keep-moving (atom true))
+(def sleep1 (atom 10000))
+(def sleep2 (atom 20000))
+(def tstate (atom "none"))
+(defn movement-thread []
+  (let [splitfn (partial walk/postwalk chance-split)
+        mergefn (partial walk/postwalk chance-merge)] 
+   (while @keep-moving
+       ;(when ())
+       (dotimes [x 5] (swap! boxtree splitfn) 
+         (reset! tstate (str "splitfn sleep:" x))
+         (Thread/sleep @sleep1)) 
+       (reset! tstate "cycle sleep:")
+       (Thread/sleep @sleep2)
+       (dotimes [x 5] (swap! boxtree mergefn)))
+     (reset! tstate "stop") 
+    ))
+
 (comment
-  (def boxtree (atom [container :h 0.5 [greenbox] [redbox] ]))
-  (def boxtree (atom [redbox]))
+  (.start (Thread. movement-thread))
+  (println @tstate)
+  (reset! keep-moving false)
+  (reset! keep-moving true)
+  (reset! sleep1 15000)
+  (reset! sleep2 60000)
+  (reset! sleep1 10)
+  (reset! sleep2 20)
+  (reset! tstate "stop")
+  (def boxtree (atom [container :h [(clj-time/plus (clj-time.local/local-now) (clj-time/secs 10)) 10 0.5] [greenbox] [redbox] ]))
+  (def boxtree (atom [colorbox "darkblue"]))
+  (reset! keep-moving false)
+    (reset! speed 1)
+    (reset! speed 5)
+    (reset! speed 120)
+    (reset! speed 180)
+    (reset! speed 360)
+    (reset! speed 720)
+  (time (reset! boxtree (walk/postwalk split-noncontainers @boxtree)))
+  (time (walk/postwalk split-noncontainers @boxtree))
+  (let [walkfn (partial walk/postwalk split-noncontainers)]
+    (time (swap! boxtree walkfn ))
+    )
+  (time (swap! boxtree (partial walk/postwalk split-noncontainers) ))
   (reset! boxtree (walk/postwalk split-noncontainers @boxtree))
   (reset! boxtree (walk/postwalk chance-split @boxtree))
   (reset! boxtree (walk/prewalk merge-containers @boxtree))
   (reset! boxtree (walk/prewalk chance-merge @boxtree))
-  (dotimes [x 10]
+(println @speed)
+  (do
+    (reset! speed 10)
+;    (reset! boxtree (walk/postwalk chance-split @boxtree))
+;    (reset! boxtree (walk/postwalk chance-split @boxtree))
+;    (Thread/sleep 10000)
+    (reset! speed 180)
+    (dotimes [x 10]
     (reset! boxtree (walk/postwalk chance-split @boxtree))
     (reset! boxtree (walk/prewalk chance-merge @boxtree))
-    (Thread/sleep 1000)
-    )
+    (Thread/sleep 90000)
+    ))
   (pprint (nth @boxtree 2))
   (pprint @boxtree)
   (println (first @boxtree))
