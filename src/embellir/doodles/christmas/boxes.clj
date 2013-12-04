@@ -182,8 +182,8 @@
   ))
 
 (def keep-moving (atom true))
-(def sleep1 (atom 10000))
-(def sleep2 (atom 20000))
+(def sleep1 (atom 120000))
+(def sleep2 (atom 240000))
 (def tstate (atom "none"))
 (defn movement-thread []
   (let [splitfn (partial walk/postwalk chance-split)
@@ -204,8 +204,9 @@
   (println @tstate)
   (reset! keep-moving false)
   (reset! keep-moving true)
-  (reset! sleep1 15000)
-  (reset! sleep2 60000)
+  (reset! embellir.doodles.christmas.boxes/sleep1 120000)
+  (reset! embellir.doodles.christmas.boxes/sleep2 240000)
+  (reset! sleep2 240000)
   (reset! sleep1 10)
   (reset! sleep2 20)
   (reset! tstate "stop")
