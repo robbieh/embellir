@@ -164,8 +164,8 @@
 (def keep-moving (atom true))
 (def sleep1 (atom 120000))
 (def sleep2 (atom 240000))
-(def sleep1 (atom 20000))
-(def sleep2 (atom 60000))
+(def sleep1 (atom 10000))
+(def sleep2 (atom 10000))
 (def tstate (atom "none"))
 (defn movement-thread []
   (let [splitfn (partial walk/postwalk chance-split)
