@@ -20,15 +20,16 @@
     (swap! entities assoc-in  [@myname :sleepms] x))
   )
 
-(defn time-to-pct [[tgttime duration tgtpct]]
+(defn time-to-pct [[tgttime duration tgtpct rverse] ]
   (let [now     (clj-time.local/local-now)]
     (if (clj-time/after? now tgttime) 
-      1 ; - returning here! -
+      (if rverse 0.01 1)
       (let [i (clj-time/in-millis (clj-time/interval now tgttime))]
-        (- 1 (/ i duration))
-        )
-      )
-    ))
+        (if rverse
+          (/ i duration)
+          (- 1 (/ i duration)))
+        
+        ))))
 
 
 (defn container [])
@@ -110,25 +111,35 @@
 
 (def boxtree (atom (random-color-box)))
 (defn create-container [item]
-  (let [duration @speed]
     [container (pick-random-orientation) 
-                 [(clj-time/plus (clj-time.local/local-now) (clj-time/secs duration)) 
-                 (* 1000 duration) 
-                 (+ 0.1 (rand 0.8)) ]
+                 [(clj-time/plus (clj-time.local/local-now) (clj-time/secs @speed)) 
+                 (* 1000 @speed) 
+                 (+ 0.1 (rand 0.8)) false]
                (random-color-box) item])
-  )
+
 (defn split-noncontainers [item]
   (if (and (vector? item) (fn? (first item)) (not (= container (first item))))
     ;[container (pick-random-orientation) (rand) [(pick-random-box)] item]
     (create-container item)
     item))
 
+(defn cleanup-containers [item]
+  (if (and (vector? item) (= container (first item))
+           (true? (nth (nth item 2) 3))
+           (clj-time/after? (clj-time.local/local-now) (first (nth item 2) ))
+           )
+        (nth item 4)
+        ;(if (> 0.5 (rand)) (nth item 3) (nth item 4))
+    item))
+
 (defn merge-containers [item]
   (if (and (vector? item) (= container (first item))
            (not (= container (nth item 3) (nth item 4))))
-        (if (> 0.5 (rand))
-          (nth item 3)
-          (nth item 4))
+    [container (nth item 1) 
+               [(clj-time/plus (clj-time.local/local-now) (clj-time/secs @speed)) 
+                 (* 1000 @speed) 
+                 (+ 0.1 (rand 0.8)) true]
+            (nth item 3) (nth item 4) ]
     item ))
 
 (defn chance-split [item]
@@ -158,16 +169,26 @@
 (def tstate (atom "none"))
 (defn movement-thread []
   (let [splitfn (partial walk/postwalk chance-split)
-        mergefn (partial walk/postwalk chance-merge)] 
+        mergefn (partial walk/postwalk chance-merge) 
+        cleanfn (partial walk/postwalk cleanup-containers)]  
    (while @keep-moving
-       (dotimes [x 5] (swap! boxtree splitfn) 
+       (dotimes [x 1] 
          (anim-speed 100)
+         (Thread/sleep 1000)
          (future (Thread/sleep (* 1000 @speed) ) (anim-speed 1000))
+         (swap! boxtree splitfn) 
          (reset! tstate (str "splitfn sleep:" x))
          (Thread/sleep @sleep1)) 
-       (reset! tstate "cycle sleep:")
-       (Thread/sleep @sleep2)
-       (dotimes [x 5] (swap! boxtree mergefn)))
+       (dotimes [x 1] 
+         (anim-speed 100)
+         (Thread/sleep 1000)
+         (future (Thread/sleep (* 1000 @speed) ) (anim-speed 1000))
+         (swap! boxtree mergefn)
+         (reset! tstate (str "mergefn sleep:" x))
+         (future (Thread/sleep (+ 100 (* 1000 @speed)) )  (swap! boxtree cleanfn))
+         (Thread/sleep @sleep2)
+         )
+     )
      (reset! tstate "stop") 
     ))
 
@@ -179,8 +200,8 @@
   (reset! embellir.doodles.christmas.boxes/sleep1 120000)
   (reset! embellir.doodles.christmas.boxes/sleep2 240000)
   (reset! sleep2 240000)
-  (reset! sleep1 10000)
-  (reset! sleep2 60000)
+  (reset! sleep1 5000)
+  (reset! sleep2 5000)
   (reset! tstate "stop")
   (def boxtree (atom [container :h [(clj-time/plus (clj-time.local/local-now) (clj-time/secs 10)) 10 0.5] [greenbox] [redbox] ]))
   (def boxtree (atom [colorbox "darkblue"]))
@@ -200,6 +221,7 @@
   (reset! boxtree (walk/postwalk split-noncontainers @boxtree))
   (reset! boxtree (walk/postwalk chance-split @boxtree))
   (reset! boxtree (walk/prewalk merge-containers @boxtree))
+  (reset! boxtree (walk/prewalk cleanup-containers @boxtree))
   (reset! boxtree (walk/prewalk chance-merge @boxtree))
 (println @speed)
   (do
@@ -215,7 +237,6 @@
     ))
   (pprint (nth @boxtree 2))
   (pprint @boxtree)
-  (println (first @boxtree))
-  (println (rest @boxtree))
+  (println @tstate)
   (walk/postwalk-demo @boxtree)
   )
