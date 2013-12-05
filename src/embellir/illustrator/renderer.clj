@@ -29,10 +29,17 @@
         d (.getDelay ^javax.swing.Timer timer)
         ]
     (repaint! ^javax.swing.JPanel canvas) 
+    ;(repaint! ^javax.swing.JPanel embellir.illustrator.window/xyz)
+    
+    
+    ;(repaint! ^javax.swing.JPanel canvas) 
     
 ;    (.setBackground ^javax.swing.JPanel canvas (color "black"))
 ;    (.update ^javax.swing.JPanel canvas (.getGraphics ^javax.swing.JPanel canvas))
+
+;
     ;(.paintImmediately ^javax.swing.JPanel canvas (.getBounds  ^javax.swing.JPanel canvas))
+    ;(.paintImmediately ^javax.swing.JPanel embellir.illustrator.window/xyz (.getBounds  ^javax.swing.JPanel embellir.illustrator.window/xyz))
    
     (if (not (= d sleepms)) (.setDelay ^javax.swing.Timer timer sleepms))
        

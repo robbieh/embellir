@@ -1,5 +1,4 @@
 (ns embellir.core
-  (:gen-class)
   (:import [java.io File])
   (:require [embellir.illustrator :as illustrator]
             [embellir.curator :as curator]

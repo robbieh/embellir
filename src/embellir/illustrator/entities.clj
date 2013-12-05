@@ -99,8 +99,8 @@
 (pprint  @entities)
 
 (.getDelay  (get-in @entities  [ "christmas/boxes" :timer]))
-(swap! entities assoc-in  ["christmas/boxes" :sleepms] 250)
-(do (remove-entity "christmas/boxes") (load-entity "christmas/boxes" {:sleepms 500}))
+(swap! entities assoc-in  ["christmas/boxes" :sleepms] 100)
+(do (remove-entity "christmas/boxes") (load-entity "christmas/boxes" {:sleepms 1000}))
 (do (remove-entity "ip4map") (load-entity "ip4map" {:sleepms 2000}))
 (do (remove-entity "ip4plaid") (load-entity "ip4plaid" {:sleepms 5000}))
 (remove-entity "cjdnspeers")
@@ -111,6 +111,8 @@
 
 (let [c (get-in @entities ["christmas/boxes" :canvas])]
 ;  (.paintImmediately c (.getBounds c))
+  (.setIgnoreRepaint c true)
+  (.setOpaque ^javax.swing.JPanel c false)
   (.setBackground ^javax.swing.JPanel c (color "white"))
   (.update ^javax.swing.JPanel c (.getGraphics ^javax.swing.JPanel c) )
   ))
