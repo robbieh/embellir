@@ -15,6 +15,8 @@
 (def thickness 3)
 (def myname (atom nil))
 
+(def candycaneimg (try (javax.imageio.ImageIO/read  (new java.net.URL "file:///home/robbie/Downloads/Candy_Cane_Background_Pattern_by_SweetSoulSister.jpg"))))
+
 (defn anim-speed [x]
   (when @myname
     (swap! entities assoc-in  [@myname :sleepms] x))
@@ -85,18 +87,32 @@
 (def s-black (style :background "black"))
 (def speed (atom 3))
 (defn colorbox [graphics x y w h & more]
-  (let [x (+ x thickness)
+  (when (and (> w thickness ) (> h thickness))  
+    (let [x (+ x thickness)
         y (+ y thickness)
         w (- w (* 2 thickness))
         h (- h (* 2 thickness))
         s (style :background (first (first more)))
         ]
-   (draw graphics (rect x y w h) s))
+   (draw graphics (rect x y w h) s)))
   [colorbox (first (first more))]
   )
 
 
-(defn candystripe [graphics x y w h & more] )
+(defn candystripe [graphics x y w h & more] 
+  (let [x (+ x thickness)
+        y (+ y thickness)
+        w (- w (* 2 thickness))
+        h (- h (* 2 thickness))
+        w2 (- w thickness)
+        h2 (- h thickness)
+        ]
+    (when (and (> w thickness) (> h thickness))
+       (.drawImage ^java.awt.Graphics2D graphics ^java.awt.Image candycaneimg 
+       x y  (+ x w) (+ y h)
+       0 0 w2 h2
+     nil)))
+  )
 
 (defn reindeer [graphics x y w h & more] )
 
@@ -109,13 +125,17 @@
 
 ;(def boxtree (atom [(pick-random-box)]))
 
-(def boxtree (atom (random-color-box)))
+(defn random-box [] (if (< 0.95 (rand)) [candystripe]
+                      (random-color-box)
+                      ))
+
+(def boxtree (atom (random-box)))
 (defn create-container [item]
     [container (pick-random-orientation) 
                  [(clj-time/plus (clj-time.local/local-now) (clj-time/secs @speed)) 
                  (* 1000 @speed) 
                  (+ 0.1 (rand 0.8)) false]
-               (random-color-box) item])
+               (random-box) item])
 
 (defn split-noncontainers [item]
   (if (and (vector? item) (fn? (first item)) (not (= container (first item))))
@@ -172,14 +192,14 @@
         mergefn (partial walk/postwalk chance-merge) 
         cleanfn (partial walk/postwalk cleanup-containers)]  
    (while @keep-moving
-       (dotimes [x 1] 
+       (dotimes [x 3] 
          (anim-speed 100)
          (Thread/sleep 1000)
          (future (Thread/sleep (* 1000 @speed) ) (anim-speed 1000))
          (swap! boxtree splitfn) 
          (reset! tstate (str "splitfn sleep:" x))
          (Thread/sleep @sleep1)) 
-       (dotimes [x 1] 
+       (dotimes [x 2] 
          (anim-speed 100)
          (Thread/sleep 1000)
          (future (Thread/sleep (* 1000 @speed) ) (anim-speed 1000))
