@@ -14,8 +14,19 @@
 
 (def thickness 3)
 (def myname (atom nil))
+(def specials (atom 2))
 
-(def candycaneimg (try (javax.imageio.ImageIO/read  (new java.net.URL "file:///home/robbie/Downloads/Candy_Cane_Background_Pattern_by_SweetSoulSister.jpg"))))
+(defn list-resources []  
+(seq (.listFiles (new java.io.File (.getFile (clojure.java.io/resource "christmas"))))))
+
+
+(defn try-load-img [filename]
+;  (let [filename (if ())])
+  (try (javax.imageio.ImageIO/read  (new java.net.URL (str "file://" filename))))
+  )
+
+(def images   (vec (filter #(not (nil? % )) (map try-load-img (list-resources))))  )
+
 
 (defn anim-speed [x]
   (when @myname
@@ -99,7 +110,7 @@
   )
 
 
-(defn candystripe [graphics x y w h & more] 
+(defn imagebox [graphics x y w h & more] 
   (let [x (+ x thickness)
         y (+ y thickness)
         w (- w (* 2 thickness))
@@ -108,9 +119,10 @@
         h2 (- h thickness)
         ]
     (when (and (> w thickness) (> h thickness))
-       (.drawImage ^java.awt.Graphics2D graphics ^java.awt.Image candycaneimg 
-       x y  (+ x w) (+ y h)
-       0 0 w2 h2
+       (.drawImage ^java.awt.Graphics2D graphics 
+         ^java.awt.Image (first (first more))
+         x y  (+ x w) (+ y h)
+         0 0 w2 h2
      nil)))
   )
 
@@ -125,7 +137,7 @@
 
 ;(def boxtree (atom [(pick-random-box)]))
 
-(defn random-box [] (if (< 0.95 (rand)) [candystripe]
+(defn random-box [] (if (< 0.95 (rand)) [imagebox (rand-nth images) ]
                       (random-color-box)
                       ))
 
@@ -213,8 +225,8 @@
     ))
 
 (comment
-  (.start (Thread. movement-thread))
   (println @tstate)
+  (.start (Thread. movement-thread))
   (reset! keep-moving false)
   (reset! keep-moving true)
   (reset! embellir.doodles.christmas.boxes/sleep1 120000)
@@ -223,6 +235,10 @@
   (reset! sleep1 5000)
   (reset! sleep2 5000)
   (reset! tstate "stop")
+  (count images)
+  (println images)
+  (reset! boxtree [imagebox (rand-nth images)])
+  (println images)
   (def boxtree (atom [container :h [(clj-time/plus (clj-time.local/local-now) (clj-time/secs 10)) 10 0.5] [greenbox] [redbox] ]))
   (def boxtree (atom [colorbox "darkblue"]))
   (reset! keep-moving false)
