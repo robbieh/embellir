@@ -44,9 +44,9 @@
   )
 
 (defn curation-map [] {:atom (atom   {})
-                       :function embellir.curios.ufw/update-iplist
+                       :function embellir.curios.ufw/update-ufw
                        :time-to-live (* 1000 60) ;minute
-                       :receiver-function embellir.curios.ufw/receive-iplist})
+                       :receiver-function embellir.curios.ufw/receive-ufw})
 
 (comment
   (embellir.curator/trash-curio "ufw")

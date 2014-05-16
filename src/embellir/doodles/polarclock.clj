@@ -101,7 +101,7 @@
         ;hourrad  (hour-to-radians-12 (clj-time/hour (clj-time.local/local-now)))
         hourdeg  (hour-to-degrees-12 (clj-time/hour (clj-time.local/local-now)))
         ;secrad  (minutes-to-radians (clj-time/sec (clj-time.local/local-now)))
-        secdeg (minutes-to-degrees (clj-time/sec (clj-time.local/local-now)))
+        secdeg (minutes-to-degrees (clj-time/second (clj-time.local/local-now)))
 ;       onerad (radians 1)
         ;minofhourrad (/ stoprad 14)
         minofhourdeg (/ stopdeg 15) 

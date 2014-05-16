@@ -17,15 +17,14 @@
 (def specials (atom 2))
 
 (defn list-resources []  
-(seq (.listFiles (new java.io.File (.getFile (clojure.java.io/resource "christmas"))))))
+  (seq (.listFiles (new java.io.File (.getFile (clojure.java.io/resource "christmas"))))))
 
+(defn try-load-img [filename] 
+  (try (javax.imageio.ImageIO/read  (new java.net.URL (str "file://" filename)))))
 
-(defn try-load-img [filename]
-;  (let [filename (if ())])
-  (try (javax.imageio.ImageIO/read  (new java.net.URL (str "file://" filename))))
-  )
+(defn not-nil [x] (not (nil? x)))
 
-(def images   (vec (filter #(not (nil? % )) (map try-load-img (list-resources))))  )
+(def images   (vec (filter not-nil (map try-load-img (list-resources))))  )
 
 
 (defn anim-speed [x]

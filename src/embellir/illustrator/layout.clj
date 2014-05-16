@@ -128,6 +128,8 @@
   (set-central-feature)
   (layout-central-feature)
   (println @central-feature)
+  (reset! central-feature "ip4map")
+  (reset! central-feature "christmas/boxes")
   (filter #(get-in %1 [1 :central-feature]) @entities)
 
   )

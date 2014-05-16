@@ -8,7 +8,9 @@
      [embellir.illustrator.window :as window]
      [embellir.illustrator.renderer :as renderer]
      [seesaw.timer :as timer]
-     )
+;     [clojure.edn :as edn]
+     [alembic.still] 
+     ) 
   (:use seesaw.core
      seesaw.graphics
      seesaw.color
@@ -17,6 +19,32 @@
   )
 
 (defn uniquename [n] n) ;TODO: check entity list
+
+
+(defn find-entity [ent]
+  (let [home (System/getProperty "user.home")
+        exts [".emb" ".clj"]
+        path ["src/embellir/doodles" 
+              (clojure.java.io/file home ".embellir/doodles")]]
+         
+      (first (drop-while nil?
+        (for [ e exts p path ] 
+          (let [f (clojure.java.io/file p (str ent e))]
+            (if (.exists f) [f e] )))))
+        
+        ))
+
+(defn resolve-emb-file! [f]
+  (let [conf (read-string (slurp f))
+        deps (:dependencies conf)
+        ]
+    (doseq [dep deps] (alembic.still/distill dep)))
+  (clojure.string/replace (str f) #".emb$" ".clj") ;TODO this is dumb. should get :code from config map
+  )
+
+(defn resolve-entity [ent]
+  (let [[file ext] (find-entity ent)]
+    (if (= ".emb" ext) (resolve-emb-file! file) file) ))
 
 (defn load-entity [doodlename {:keys [placement sleepms entname] :as params} ]
   ;determine size, position
@@ -28,8 +56,10 @@
        entname' (if entname entname doodlename)
        sleepms (or sleepms 1000)
        params (or params {})
+       filetoload (resolve-entity doodlename )
        ]
-   (load-file (str "src/embellir/doodles/" doodlename ".clj"))
+   (println "loading:" filetoload)
+   (load-file filetoload)
    (if (find-ns (symbol fqi))
      (if-let [func (resolve (symbol fqi "draw-doodle"))]
        (let [
@@ -90,6 +120,11 @@
 (do (remove-entity "polarclock")
     (load-entity "polarclock" {:placement [ :fullscreen] :sleepms 10000
                            :central-feature true } ))
+
+(embellir.curator/curate "weather")
+(do (remove-entity "weather")
+  (load-entity "weather" {:sleepms 5000}))
+
 (remove-entity "ipviz")
 (get entities "circle")
 (load-entity "ipviz" {:placement [ :fullscreen] :sleepms 1000
@@ -101,9 +136,14 @@
 (.getDelay  (get-in @entities  [ "christmas/boxes" :timer]))
 (swap! entities assoc-in  ["christmas/boxes" :sleepms] 100)
 (do (remove-entity "christmas/boxes") (load-entity "christmas/boxes" {:sleepms 1000}))
+
+(embellir.curator/curate "iplist")
+(embellir.curator/get-curio "iplist")
+(embellir.curator/list-curios)
 (do (remove-entity "ip4map") (load-entity "ip4map" {:sleepms 2000}))
 (do (remove-entity "ip4plaid") (load-entity "ip4plaid" {:sleepms 5000}))
 (remove-entity "cjdnspeers")
+(embellir.curator/curate "cjdnspeers")
 (load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 2000
                            :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
                            })
@@ -116,7 +156,6 @@
   (.setBackground ^javax.swing.JPanel c (color "white"))
   (.update ^javax.swing.JPanel c (.getGraphics ^javax.swing.JPanel c) )
   ))
-
 
 
 

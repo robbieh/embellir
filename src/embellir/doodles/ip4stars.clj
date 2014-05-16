@@ -1,4 +1,4 @@
-(ns embellir.doodles.ip4map
+(ns embellir.doodles.ip4stars
   (:import 
      ;      java.awt.AlphaComposite
      )
@@ -47,7 +47,7 @@
            :else [0 0 50]
            )
 
-   (let [age-seconds (clj-time/in-seconds (clj-time/interval then now)) ]
+   (let [age-seconds (clj-time/in-secs (clj-time/interval then now)) ]
      (cond (< age-seconds 60) (blend-colors [255 0 0] [255 255 0] ( / (max  age-seconds 1) 60))
            (< age-seconds 600) (blend-colors [255 255 0] [0 255 0] (/ age-seconds 600))
            :else [0 255 0 ])
