@@ -2,6 +2,7 @@
   (:require 
      [embellir.illustrator.screen :as screen]
      [embellir.illustrator.window :as window]
+     [clojure.math.numeric-tower]
      )
   (:use seesaw.core
      seesaw.graphics
@@ -16,17 +17,33 @@
 ;; * doodles which "hold" and manage other doodles ...
 ;;
 
+(defn list-layout-candidates [] (keys (remove #(true? (:background (val %))) @entities)))
+(defn list-background-candidates [] (keys (filter #(true? (:background (val %))) @entities)))
+
 (defn move-entity [entname x y]
   (let [canvas (get-in @entities [entname :canvas]) ]
-    (move! canvas :to [x y])))
+    (when canvas (move! canvas :to [x y]))))
 
 (defn resize-entity [entname w h]
  (let [canvas (get-in @entities [entname :canvas])
-       bounds (config canvas :bounds)
-       x      (.getX bounds)
-       y      (.getY bounds)
+       bounds (when canvas (config canvas :bounds))
+       x      (when bounds (.getX bounds))
+       y      (when bounds (.getY bounds))
         ]
-       (config! canvas :bounds [x y w h]))
+       (when canvas (config! canvas :bounds [x y w h])))
+  )
+
+;;;;;;;;;;;;; background handler ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn layout-background []
+  (let [candidates (list-background-candidates)
+        rcand      (rand-nth candidates)
+        canvas     (get-in @entities [rcand :canvas])
+        zindex     (dec (.getComponentCount window/xyz))
+        ]
+    (move-entity rcand 0 0)
+    (resize-entity rcand (.getWidth window/xyz) (.getHeight window/xyz))
+    (.setComponentZOrder window/xyz canvas zindex)
+    )
   )
 
 ;;;;;;;;;;;;; grid layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -48,7 +65,7 @@
   (get results maximum))) 
 
 (defn layout-grid []
-  (let [candidates        (keys @entities)
+  (let [candidates        (list-layout-candidates)
         ccount            (count candidates)
         optimal           (get-optimal-size ccount
                                             (.getWidth window/xyz) 
@@ -71,36 +88,49 @@
         ymseq            (repeat ystart)
         ]
     (
-     (println candidates)
+     (println "Candidates:" candidates)
      (println cols rows boxsize xmargin ymargin)
      (doall (map move-entity candidates (map + xseq xmseq) (map + yseq ymseq)))
      (doseq [c candidates] 
+       (println "resizing: " c boxsize)
        (resize-entity c boxsize boxsize)
+       (println "done")
        )))
   )
 ;;;;;;;;;;;;; central feature layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (def central-feature (atom nil))
 
+
+(defn get-central-feature-list []
+  (let [filterfn  #(get-in % [1 :central-feature])
+        candidates (keys (filter filterfn @entities))]
+  candidates)
+  )
+
+
 (defn set-central-feature []
   (let [filterfn   #(get-in % [1 :central-feature])
         candidates (keys (filter filterfn @entities))]
-  (reset! central-feature (first candidates)) ;;TODO - this ain't pretty.
+  (reset! central-feature (rand-nth candidates)) ;;TODO - this ain't pretty.
   candidates)
   )
 
 (defn layout-central-feature []
+  (set-central-feature)
+  (layout-background)
+  (if (nil? @central-feature) (set-central-feature))
   (let [w           (.getWidth window/xyz) 
         h           (.getHeight window/xyz) 
         orientation (if (> h w) :v :h )
         margin      (if (= orientation :v) (* 0.1 h) (* 0.1 w))
         marginseq   (map * (repeat margin) (range))
         bottom      (- h margin)
-        candidates  (remove #(= % @central-feature) (keys @entities))
+        candidates  (remove #(= % @central-feature) (list-layout-candidates))
         w           (if (= orientation :v) w (- w margin))
         h           (if (= orientation :h) h (- h margin))
         ]
-    (println candidates)
+    (println "CF:" @central-feature ", Candidates:" candidates)
     (if (= orientation :h)
       (do  ;horizontal orientation
         (move-entity @central-feature margin 0)
@@ -116,6 +146,14 @@
         (doall (map resize-entity candidates (repeat margin) (repeat margin)))
         )))
   )
+
+(def current-layout layout-central-feature)
+(defn relayout []  (current-layout))
+(defn do-layout [data]
+  (println data)
+  (println (symbol "embellir.illustrator.layout" data))
+  (println (resolve (symbol "embellir.illustrator.layout" data)))
+  ((resolve (symbol "embellir.illustrator.layout" data))))
 
 (comment
   (get-optimal-size 12 1367 770)

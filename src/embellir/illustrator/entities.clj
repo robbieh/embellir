@@ -15,10 +15,11 @@
      seesaw.graphics
      seesaw.color
      [embellir.illustrator.entitylist :only [entities]]
+     [embellir.illustrator.layout :only [relayout]]
      )
   )
 
-(defn uniquename [n] n) ;TODO: check entity list
+(defn uniquename [n] (str n)) ;TODO: check entity list
 
 
 (defn find-entity [ent]
@@ -44,7 +45,7 @@
 
 (defn resolve-entity [ent]
   (let [[file ext] (find-entity ent)]
-    (if (= ".emb" ext) (resolve-emb-file! file) file) ))
+    (if (= ".emb" ext) (resolve-emb-file! file) (str file)) ))
 
 (defn load-entity [doodlename {:keys [placement sleepms entname] :as params} ]
   ;determine size, position
@@ -58,8 +59,7 @@
        params (or params {})
        filetoload (resolve-entity doodlename )
        ]
-   (println "loading:" filetoload)
-   (load-file filetoload)
+   (load-file filetoload) ;this pulls in a .clj namespace
    (if (find-ns (symbol fqi))
      (if-let [func (resolve (symbol fqi "draw-doodle"))]
        (let [
@@ -69,11 +69,17 @@
                             :paint paintfn)
              t (timer (partial renderer/repaint-entity itemname ) :repeats? true :delay sleepms :start? false)
              entmap (conj params {:canvas canvas :sleepms sleepms :timer t})
+             entityhints (try (deref (resolve (symbol fqi "entityhints"))) (catch Exception e))
+
              ]
+         ;(println "loading " entname' "as" itemname " with hints " entityhints)
          (.start ^javax.swing.Timer t)
          (.setOpaque ^javax.swing.JPanel canvas false)
-         (swap! entities #(-> % (assoc itemname entmap)))
+         (swap! entities assoc itemname entmap) 
+         (when entityhints (swap! entities update-in [itemname] merge entityhints))
          (config! window/xyz :items (conj (config window/xyz :items) canvas))
+         (relayout)
+         (get @entities itemname) ; just so something sensible is returned
          )
        )
      (println "could not find namespace from " (symbol fqi))
@@ -87,6 +93,8 @@
     ;(println (config window/xyz :items))
     ;(println canvas)
     ;(println (remove #(= % canvas) (config window/xyz :items)))
+    ;if we dont' stop the timer, it keeps on firin' ...
+    (.stop ^javax.swing.Timer (:timer (get @entities entname)))
     (config! window/xyz :items (remove #(= % canvas) (config window/xyz :items)))
     (swap! entities dissoc entname)
     )
@@ -120,16 +128,17 @@
 (do (remove-entity "polarclock")
     (load-entity "polarclock" {:placement [ :fullscreen] :sleepms 10000
                            :central-feature true } ))
-
+(pprint  @entities)
 (embellir.curator/curate "weather")
 (do (remove-entity "weather")
   (load-entity "weather" {:sleepms 5000}))
 
 (remove-entity "ipviz")
+(remove-entity "wordcloud")
 (get entities "circle")
 (load-entity "ipviz" {:placement [ :fullscreen] :sleepms 1000
                       :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523" } )
-(do  (config! window/xyz :items nil) (reset! entities {})) ;reset it all!!!!!!!!
+(do  (config! window/xyz :items nil) (reset! entities {})) ;reset it all!!!!!!!!!!!!!!!!!!!!!!!!!!!!1
 (config window/xyz :items )
 (pprint  @entities)
 
@@ -144,6 +153,7 @@
 (do (remove-entity "ip4plaid") (load-entity "ip4plaid" {:sleepms 5000}))
 (remove-entity "cjdnspeers")
 (embellir.curator/curate "cjdnspeers")
+
 (load-entity "cjdnspeers" {:placement [:fullscreen] :sleepms 2000
                            :ip6 "fcd2:b843:787a:59f3:6345:7ac2:6df3:5523"
                            })

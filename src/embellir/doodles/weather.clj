@@ -22,6 +22,7 @@
 ; this is stupid simple at the moment ... TODO: nice graphics
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def entityhints {:sleepms 60000})
 (def droidSansMono (font :name "DroidSansMono" :size 30))
 
 (defn draw-weather 

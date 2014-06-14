@@ -33,3 +33,22 @@
   "draw a hexagon"
   []
   )
+
+(def PI java.lang.Math/PI)
+(defn radians [degrees] (* degrees (/ PI 180)))
+(defn degrees [radians] (* radians (/ 180 PI)))
+
+(defn point-on-ellipse [x y w h deg]
+  (let [t (radians (- 90 deg))]
+  [ (+ x (* w (Math/cos t))) 
+    (+ y (* h (Math/sin t)))
+   ]
+    )
+  )
+
+(defn circle-arc-length [radius degrees]
+  (/ (* degrees PI radius) 180)
+  )
+
+
+

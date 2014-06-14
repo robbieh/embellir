@@ -7,7 +7,8 @@
 ;           [java.awt.image BufferedImage]
            ) 
   (:require [seesaw.core :as seesaw])
-  (:use embellir.illustrator.components
+  (:use 
+     ;embellir.illustrator.components
         embellir.illustrator.entities
         embellir.illustrator.systems
         seesaw.core

@@ -24,6 +24,8 @@
 (def private-data (atom {}))
 (def qmax 10)
 
+(def entityhints {:sleepms 5000,  :placement [0 0 250 250] :central-feature true})
+
 ; {"ip" persistenQueue({:in x :out y},...), ...}
 (def iostats (atom {}))
 

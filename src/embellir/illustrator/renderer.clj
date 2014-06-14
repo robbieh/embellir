@@ -17,8 +17,6 @@
 
 
 
-
-
 (defn repaint-entity
   [entname & more]
   ; call the :function of the entity with the :frame and graphics for the
@@ -26,9 +24,13 @@
   ; :next-time according to :sleepms
   ;
   (let [{:keys [canvas sleepms timer]} (get @entities entname) 
-        d (.getDelay ^javax.swing.Timer timer)
+        d (if (nil? timer) nil (.getDelay ^javax.swing.Timer timer) )
         ]
-    (repaint! ^javax.swing.JPanel canvas) 
+    (when (nil? d) (println entname " has nil timer"))
+    (try (repaint! ^javax.swing.JPanel canvas) 
+      (catch Exception e (println (str "render error " entname (.getMessage e)))
+        
+        )) 
     ;(repaint! ^javax.swing.JPanel embellir.illustrator.window/xyz)
     
     
@@ -40,8 +42,8 @@
 ;
     ;(.paintImmediately ^javax.swing.JPanel canvas (.getBounds  ^javax.swing.JPanel canvas))
     ;(.paintImmediately ^javax.swing.JPanel embellir.illustrator.window/xyz (.getBounds  ^javax.swing.JPanel embellir.illustrator.window/xyz))
-   
-    (if (not (= d sleepms)) (.setDelay ^javax.swing.Timer timer sleepms))
+     
+    (when d (if (not (= d sleepms)) (.setDelay ^javax.swing.Timer timer sleepms)))
        
    ) 
   )

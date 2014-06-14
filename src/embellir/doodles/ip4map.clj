@@ -25,6 +25,7 @@
 ;
 (def private-data (atom {}))
 (def qmax 10)
+(def entityhints {:sleepms 5000,  :placement [0 0 250 250] :central-feature false})
 
 (defn blend-colors [c1 c2 pct]
   (let [

@@ -1,0 +1,11 @@
+
+<LINE> = DATE1 <S> HOST <S> KERNEL <S> DATE2 <S> UFWSTAT <S> UFWDATA
+S = ' '
+DATE1 = #"... .. ..:..:.."
+KERNEL = 'kernel:'
+HOST = word
+DATE2 = <'['> number '.' number <']'>
+UFWSTAT = <'['> <word> <S> word <']'>
+UFWDATA = #".*"
+<number> = #'[0-9]+'
+<word> = #'[a-zA-Z]+'

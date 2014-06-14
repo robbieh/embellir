@@ -13,21 +13,12 @@
     [clj-time.coerce]
     [clojure.string :as str]
     [embellir.curator :as curator]
+    [embellir.illustrator.layout]
     [server.socket]
     )
   )
 
-; samples of the protocol:
-; supply mail :last-date <some date here> :unread-count :total-count :last-subject :last-from
-; direct start mail
-; direct focus mail
-; supply text :data "a big long line of text......."
-; direct layout 
-; request
 
-
-;(def response-codes {:0 "OK"
-;                     :1 "Failed"})
 
 
 (defn read-map 
@@ -39,12 +30,14 @@
 (defn supply [data] 
   (let [[curioname remainder] (str/split data #" " 2)
         dmap (read-map remainder)]
+;    (println "supplied with " curioname dmap)
         (curator/receive-data-for-curio curioname dmap)))
 
+;layout layout-central-feature
+;layout layout-grid
+
 (defn layout [data] 
-  (comment if data 
-    (embellir.illustrator.systems/relayout data)
-    (embellir.illustrator.systems/relayout)))
+  (embellir.illustrator.layout/do-layout data) )
 
 (defn curate [data]
   (doseq [item (str/split data #" ")]
@@ -60,10 +53,17 @@
     (embellir.illustrator.entities/load-entity item remainder))
   )
 
+(defn deillustrate [data]
+  (let [[item remainder] (str/split data #" " 2) ]
+    (println "de-illustrating:" item )
+    (embellir.illustrator.entities/remove-entity item)))
+
 (def cmd-map { "supply" supply
               "layout" layout 
               "curate" curate
-              "illustrate" illustrate})
+              "illustrate" illustrate
+              "deillustrate" deillustrate
+              })
 (defn handle-command [line]
   (when-not (= \ (first (str/trim line)))
     (let [[cmd remainder] (str/split line #" " 2)]
