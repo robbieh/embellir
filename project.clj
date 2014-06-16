@@ -21,8 +21,10 @@
                            [org.clojure/data.zip "0.1.1"]
                            [instaparse "1.3.2"]
                            [org.clojure/core.memoize "0.5.6"]
+                           [alembic "0.2.1"]
                            ]
-            :profiles {:dev {:dependencies [[alembic "0.2.1"]]}}
+;            :profiles {:dev {:dependencies [[alembic "0.2.1"]]}}
+            :source-paths ["src", "/home/robbie/.embellir/"]
             :resouce-paths ["resources"]
             :repositories [["caldav4j-repo" "https://caldav4j.googlecode.com/svn/maven/"]]
             :repl-options {:timeout 600000}

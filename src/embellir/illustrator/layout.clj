@@ -40,9 +40,10 @@
         canvas     (get-in @entities [rcand :canvas])
         zindex     (dec (.getComponentCount window/xyz))
         ]
-    (move-entity rcand 0 0)
-    (resize-entity rcand (.getWidth window/xyz) (.getHeight window/xyz))
-    (.setComponentZOrder window/xyz canvas zindex)
+    (when rcand
+      (move-entity rcand 0 0)
+      (resize-entity rcand (.getWidth window/xyz) (.getHeight window/xyz))
+      (.setComponentZOrder window/xyz canvas zindex))
     )
   )
 
@@ -117,7 +118,6 @@
   )
 
 (defn layout-central-feature []
-  (set-central-feature)
   (layout-background)
   (if (nil? @central-feature) (set-central-feature))
   (let [w           (.getWidth window/xyz) 
@@ -147,6 +147,31 @@
         )))
   )
 
+;;;;;;;;;;;;; embossed corner layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn layout-embossed-corner []
+  (layout-background)
+  (if (nil? @central-feature) (set-central-feature))
+  (let [w           (.getWidth window/xyz) 
+        h           (.getHeight window/xyz) 
+        wmargin     (* 0.1 w)
+        hmargin     (* 0.1 h)
+        candidates  (remove #(= % @central-feature) (list-layout-candidates))
+        embw        (* 0.25 w)
+        embh        (* 0.25 h)
+        x           (- w embw wmargin) 
+        y           (- h embh hmargin)
+        ]
+    (println "CF:" @central-feature)
+    (move-entity @central-feature x y)
+    (resize-entity @central-feature embw embh)
+    )
+  )
+
+
+
+
+
+;;;;;;;;;;;;; main layout funcitons ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (def current-layout layout-central-feature)
 (defn relayout []  (current-layout))
 (defn do-layout [data]

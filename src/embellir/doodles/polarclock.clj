@@ -14,7 +14,9 @@
   (:use     seesaw.graphics
      seesaw.color
      seesaw.font
-     embellir.iutils)
+     embellir.iutils
+     embellir.illustrator.colors
+     )
   )
 
 (def entityhints {:sleepms 10000 :central-feature true :placement :fullscreen })
@@ -91,9 +93,12 @@
         metrics (.getFontMetrics graphics droidSansMono)
         fheight (.getHeight metrics)
         fwidth  (* 0.5 (.stringWidth metrics dstr))
+        p embellir.illustrator.colors/default-palette
+        secondary (:secondary p)
         mstroke (stroke :width 3)
-        mstyle (style :foreground (color 25 100 65) :background (color 10 10 10 0) :stroke mstroke )
+        mstyle (style :foreground (:highlight secondary) :background (:fill secondary) :stroke mstroke )
         ]
+    (.setColor graphics (:highlight secondary))
     (.setFont graphics droidSansMono)
     (rotate graphics (* 0.5 degs))
 
@@ -113,8 +118,10 @@
         metrics (.getFontMetrics graphics droidSansMono)
         fheight (.getHeight metrics)
         fwidth  (* 0.5 (.stringWidth metrics dstr))
+        p embellir.illustrator.colors/default-palette
+        secondary (:secondary p)
         mstroke (stroke :width 10)
-        mstyle (style :foreground (color 25 100 65) :background (color 15 90 55) :stroke mstroke )
+        mstyle (style :foreground (:main secondary) :background (:fill secondary) :stroke mstroke )
         ]
     
     (push graphics
@@ -166,8 +173,10 @@
         tmdiam (* 0.5 (* 0.73 size))
         mdiam (* 1 (* 0.78 size))
         hdiam (* 0.5 (- diam tmdiam))
+        p embellir.illustrator.colors/default-palette
+        secondary (:secondary p)
         mstroke (stroke :width 3)
-        mstyle (style :foreground (color 25 100 65) :background (color 10 10 10 0) :stroke mstroke )
+        mstyle (style :foreground (:main secondary) :background (:fill secondary) :stroke mstroke )
         today (clj-time/today) 
         day-today (clj-time/day today)
         month-today (clj-time/month today)
@@ -260,15 +269,18 @@
 ;       onerad (radians 1)
         ;minofhourrad (/ stoprad 14)
         minofhourdeg (/ stopdeg 15) 
+        p embellir.illustrator.colors/default-palette
+        primary (:primary p)
+        secondary (:secondary p)
         hrstroke (stroke :width 2)
         hrstroke2 (stroke :width 3)
         minstroke1 (stroke :width 20)
         minstroke2 (stroke :width 16)
-        hrstyle (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke hrstroke )
-        hrstyle2 (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke hrstroke )
-        minstyle (style :foreground (color 0 90 0) :background (color 10 10 10 0) :stroke hrstroke2 )
-        minstyle1 (style :foreground (color 0 90 0) :background (color 10 10 10 0) :stroke minstroke1 )
-        minstyle2 (style :foreground (color 0 220 20) :background (color 10 10 10 0) :stroke minstroke2 )
+        hrstyle (style :foreground (:main primary) :background (:fill primary) :stroke hrstroke )
+        hrstyle2 (style :foreground (:main primary) :background (:fill primary) :stroke hrstroke )
+        minstyle (style :foreground (:highlight primary) :background (:fill primary) :stroke hrstroke2 )
+        minstyle1 (style :foreground (:highlight primary) :background (:fill primary) :stroke minstroke1 )
+        minstyle2 (style :foreground (:main primary) :background (:fill primary) :stroke minstroke2 )
         ]
     (push graphics 
           (translate graphics centerx centery)
