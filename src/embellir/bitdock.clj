@@ -14,6 +14,7 @@
     [clojure.string :as str]
     [embellir.curator :as curator]
     [embellir.illustrator.layout]
+    [embellir.illustrator.entities]
     [server.socket]
     )
   )

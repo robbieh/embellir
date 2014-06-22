@@ -9,7 +9,7 @@
 
 (def phosphor-green-palette
   {:primary   {:main (color 0 220 20)  :highlight (color 0 90 0) :shadow (color 0 0 0) :fill (color 0 0 0 0)}
-   :secondary {:main (color 15 90 55) :highlight (color 00 110 90) :shadow (color 0 0 0) :fill (color 10 10 10 )}
+   :secondary {:main (color 15 90 55) :highlight (color 150 110 250) :shadow (color 5 25 0) :fill (color 10 10 10 )}
 ;   :tertiary {:main :highlight :shadow :fill}
 ;   :ok {:main :highlight :shadow :fill}
 ;   :warning {:main :highlight :shadow :fill}

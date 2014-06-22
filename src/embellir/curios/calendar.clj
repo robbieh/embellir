@@ -77,7 +77,7 @@
 ;(receive-calendar {} {"20140601" {:SUMMARY "something somewhere"}})
 ;(receive-calendar {} {"asdf9999" {:SUMMARY "something somewhere"}})
 
-(receive-calendar {} {:owncloud-caldav  {:protocol :caldav :calrc :owncloud-default }})
+;(receive-calendar {} {:owncloud-caldav  {:protocol :caldav :calrc :owncloud-default }})
 
 (defn curation-map [] {:atom (atom (embellir.curios.calendar/setup-calendar))
                        :function nil

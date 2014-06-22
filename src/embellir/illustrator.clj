@@ -1,25 +1,9 @@
 (ns embellir.illustrator
-;  (:gen-class)
-  (:import [java.awt RenderingHints]
-           [javax.swing JFrame JLabel JComponent] 
-           [java.awt BorderLayout]
-;           [java.awt Graphics]
-;           [java.awt.image BufferedImage]
-           ) 
-  (:require [seesaw.core :as seesaw])
-  (:use 
-     ;embellir.illustrator.components
-        embellir.illustrator.entities
-        embellir.illustrator.systems
-        seesaw.core
-        seesaw.graphics
-        seesaw.color)
+  (:require embellir.illustrator.screen)
   )
 
+;yeah, that's it for now.
+;the screen represents information about the screen
+;it relies on embellir.illustrator.window
+;the window uses defonce to create a panel to draw on
 
-(defn start-illustrator []
-
-;  (.start (Thread. sysloop))
-;  (-> render-loop Thread. .start)
-
-  )

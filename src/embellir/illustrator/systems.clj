@@ -1,5 +1,4 @@
 (ns embellir.illustrator.systems
-  (:gen-class)
   (:require 
     [clojure.java.io :as io]
     [clojure.math.numeric-tower :as math]
@@ -7,9 +6,6 @@
     [clj-time.core]
     [clj-time.coerce]
     [clj-time.local])
-
-    (:use embellir.illustrator.entities 
-          embellir.illustrator.components)
   )
 
 

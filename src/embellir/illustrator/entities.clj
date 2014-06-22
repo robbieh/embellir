@@ -26,7 +26,7 @@
   (let [home (System/getProperty "user.home")
         exts [".emb" ".clj"]
         path ["src/embellir/doodles" 
-              (clojure.java.io/file home ".embellir/doodles")]]
+              (clojure.java.io/file home ".embellir/embellir/doodles")]]
          
       (first (drop-while nil?
         (for [ e exts p path ] 
@@ -59,6 +59,7 @@
        params (or params {})
        filetoload (resolve-entity doodlename )
        ]
+   (println "loading:" filetoload)
    (load-file filetoload) ;this pulls in a .clj namespace
    (if (find-ns (symbol fqi))
      (if-let [func (resolve (symbol fqi "draw-doodle"))]
@@ -82,7 +83,7 @@
          (get @entities itemname) ; just so something sensible is returned
          )
        )
-     (println "could not find namespace from " (symbol fqi))
+     (println "could not find namespace from" (symbol fqi))
      )
    ) 
   )

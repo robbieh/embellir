@@ -26,7 +26,7 @@
 (def droidSansMono (font :name "DroidSansMono" :size 30))
 
 (defn draw-weather 
-  [entity panel graphics2D]
+  [entity ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
   (let [width (.getWidth panel)
         height (.getHeight panel)
         hawidth (* 0.5 height)
@@ -36,16 +36,16 @@
     ;(text-mode :model)
     ;(text-size 30)
     ;(text-align :center)
-    (.setColor graphics2D (to-color "#C8FFC8"))
-    (.setFont graphics2D droidSansMono)
+    (.setColor graphics (to-color "#C8FFC8"))
+    (.setFont graphics droidSansMono)
 
-    (.drawString graphics2D  (:weather w) 0 40)
+    (.drawString graphics  (:weather w) 0 40)
     ;    (translate 0 (+ (text-ascent) (text-descent)))
-    (.drawString graphics2D  (:temp_f w) 0 80)
+    (.drawString graphics  (:temp_f w) 0 80)
     ;    (translate 0 (+ (text-ascent) (text-descent)))
-    (.drawString graphics2D  (:wind_dir w) 0 120)
+    (.drawString graphics  (:wind_dir w) 0 120)
     ;    (translate 0 (+ (text-ascent) (text-descent)))
-    (.drawString graphics2D  (:wind_mph w) 0 160)
+    (.drawString graphics  (:wind_mph w) 0 160)
     ))  
 
 (defn draw-doodle [ent ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]

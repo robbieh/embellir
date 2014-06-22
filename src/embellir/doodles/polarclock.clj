@@ -19,7 +19,7 @@
      )
   )
 
-(def entityhints {:sleepms 10000 :central-feature true :placement :fullscreen })
+(def entityhints {:sleepms 30000 :central-feature true :placement :fullscreen })
 
 (def droidSansMono (font :name "DroidSansMono" :size 40))
 
@@ -88,6 +88,7 @@
 ;(get-cal-dates (embellir.curator/get-curio "calendar") )
 
 (defn draw-today 
+  "draws the wedge for the current day"
   [^java.awt.Graphics2D graphics today y degs]
   (let [dstr    (str (clj-time/day today))
         metrics (.getFontMetrics graphics droidSansMono)
@@ -102,7 +103,6 @@
     (.setFont graphics droidSansMono)
     (rotate graphics (* 0.5 degs))
 
-;    (draw graphics (ellipse 0 y 5 5) mstyle)
     (push graphics
       (translate graphics 0 y)
       (rotate graphics 180)
@@ -112,7 +112,25 @@
     (rotate graphics (- (* 0.5 degs))) )
   )
 
+(defn cal-item-shape [w h]
+  (let [w  (double w)
+        h  (double h)
+        qw (* 0.125 w)]
+    (doto (new java.awt.geom.GeneralPath)
+      (.moveTo 0.0 0.0)
+      (.lineTo w 0.0)
+      (.lineTo w h)
+      (.lineTo (- w qw) h)
+  ;    (.curveTo w 0.0, 0.0 0.0, qw h)
+      (.quadTo (* 0.5 w) 0.0, qw h)
+      (.lineTo 0.0 h)
+      (.lineTo 0.0 0.0)
+      (.closePath)
+      )))
+
+
 (defn draw-cal-item
+  "draws a calendar item onto day wedge"
   [^java.awt.Graphics2D graphics today y degs diam item]
   (let [dstr    (str (clj-time/day today))
         metrics (.getFontMetrics graphics droidSansMono)
@@ -120,26 +138,34 @@
         fwidth  (* 0.5 (.stringWidth metrics dstr))
         p embellir.illustrator.colors/default-palette
         secondary (:secondary p)
-        mstroke (stroke :width 10)
+        mstroke (stroke :width 5)
         mstyle (style :foreground (:main secondary) :background (:fill secondary) :stroke mstroke )
+    ;    mstyle (style :foreground (:main secondary) :background (:main secondary) )
         ]
-    
+   
+    ;this draws a bar per calendar item for this day
     (push graphics
           (rotate graphics 180)
           (dotimes [i (count item)] 
-              (draw graphics 
-                           (iarc 0 0 (+ (* 20 i) diam) (+ (* 20 i) diam) 0 degs) mstyle
-                           ;(iarc 0 0 50 50 0 30) mstyle
-             )))
+            (draw graphics 
+                  (iarc 0 0 (+ (* 20 i) diam) (+ (* 20 i) diam) 0 degs) mstyle
+                  ;(iarc 0 0 50 50 0 30) mstyle
+                  )))
+    
     (comment push graphics
-          (.setFont graphics droidSansMono)
+          (translate graphics 0 y)
+          (rotate graphics 180)
           (rotate graphics (* 0.5 degs))
-          (translate graphics 0 y)  
-          (draw graphics 
-                           (polygon [0 -30] [-10 -60] [10 -60] [0 -30]) mstyle)
-          )
+          (dotimes [i (count item)] 
+            (draw graphics 
+                  (cal-item-shape 105 50) mstyle
+                  
+                  )))
+    
     )
   )
+
+(embellir.illustrator.renderer/repaint-entity "polarclock")
 
 (defn draw-callout [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
  (let [width (.getWidth panel)
@@ -176,7 +202,8 @@
         p embellir.illustrator.colors/default-palette
         secondary (:secondary p)
         mstroke (stroke :width 3)
-        mstyle (style :foreground (:main secondary) :background (:fill secondary) :stroke mstroke )
+        mstyle (style :foreground (:main secondary)  :stroke mstroke )
+        xstyle (style :foreground (:main secondary)  :background (:main secondary ) :stroke (stroke :width 1) )
         today (clj-time/today) 
         day-today (clj-time/day today)
         month-today (clj-time/month today)
@@ -198,25 +225,35 @@
          (rotate graphics (* month-degrees (dec month-today)))
          (draw graphics (iarc 0 0 mdiam mdiam 0 30) mstyle) 
       )
-    (push graphics
-         (translate graphics centerx centery)
-         (rotate graphics -180)
-         (rotate graphics (* deg-per-day day-today))
-         (rotate graphics (- (* deg-per-day-span (inc (:back monthctl)))))
-         ;if the 'take' isn't added, the actual number of days returned fluctuates! hrm.
-         (doseq [d (take span (map clj-time.coerce/to-local-date (interval-seq spanival (clj-time/days 1))))]
-               (draw graphics (line 0 (+ hdiam tmdiam) 0 diam ) mstyle)
-               (if (= d today) (draw-today graphics d diam deg-per-day-span))
-               ;the block below finds and draws event symbols
-               (let [dstr (clj-time.format/unparse-local (clj-time.format/formatters :basic-date) d)
-                     item (get caldates dstr) ]
-                 (when item 
-                   (draw-cal-item graphics d diam deg-per-day-span (+ hdiam mdiam) item) ))
 
-               (rotate graphics deg-per-day-span)
-           )
-         (draw graphics (line 0 (+ hdiam tmdiam) 0 diam ) mstyle)
-         ) 
+    ;this draws each day
+    (push graphics
+          (translate graphics centerx centery)
+          (rotate graphics -180)
+          (rotate graphics (* deg-per-day day-today))
+          (rotate graphics (- (* deg-per-day-span (inc (:back monthctl)))))
+          ;if the 'take' isn't added, the actual number of days returned fluctuates! hrm.
+          (doseq [d (take span (map clj-time.coerce/to-local-date (interval-seq spanival (clj-time/days 1))))]
+            ;(draw graphics (line 0 (+ hdiam tmdiam) 0 diam ) mstyle)
+            ;the block below finds and draws event symbols
+            (let [dstr (clj-time.format/unparse-local (clj-time.format/formatters :basic-date) d)
+                  item (get caldates dstr) ]
+              (when item 
+                (comment draw-cal-item graphics d diam deg-per-day-span (+ hdiam mdiam) item) )
+            (push graphics
+                  (translate graphics 0 diam)
+                  (rotate graphics 180)
+                  (rotate graphics (* 0.5 deg-per-day-span))
+                    (draw graphics 
+                          (cal-item-shape 105 50) xstyle
+
+                          )))
+            (if (= d today) (draw-today graphics d diam deg-per-day-span))
+
+            (rotate graphics deg-per-day-span)
+            )
+;          (draw graphics (line 0 (+ hdiam tmdiam) 0 diam ) mstyle)
+          ) 
 
     )
 
@@ -265,7 +302,7 @@
         ;hourrad  (hour-to-radians-12 (clj-time/hour (clj-time.local/local-now)))
         hourdeg  (hour-to-degrees-12 (clj-time/hour (clj-time.local/local-now)))
         ;secrad  (minutes-to-radians (clj-time/sec (clj-time.local/local-now)))
-        secdeg (minutes-to-degrees (clj-time/second (clj-time.local/local-now)))
+        ;secdeg (minutes-to-degrees (clj-time/second (clj-time.local/local-now)))
 ;       onerad (radians 1)
         ;minofhourrad (/ stoprad 14)
         minofhourdeg (/ stopdeg 15) 

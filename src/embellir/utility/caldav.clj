@@ -44,22 +44,27 @@
 (defn query-cal-data [start-date end-date calrc] 
   (let [cqdoc     (calendar-query start-date end-date)
         url       (str (:urlbase calrc ) (:calbasepath calrc) (:calendar calrc))
-        reportdoc (:body @(http/report  url {:basic-auth [(:user calrc) (:pass calrc)] :body cqdoc}) )
+        response  @(http/report  url {:basic-auth [(:user calrc) (:pass calrc)] :body cqdoc}) 
+        reportdoc (:body response)
         ]
-  (map (comp ical-map #(apply str %) :content) 
-      (l/select (l/parse reportdoc) (l/element= :cal:calendar-data))))
+  (map (comp ical-map #(apply str %) :content) (l/select (l/parse reportdoc :xml) (l/element= :cal:calendar-data)))
+    )
   )
 
 
 
 (comment
 
-  (let [calrc (read-string (slurp (clojure.java.io/file (System/getenv "HOME") ".calendar-seq.rc")))
+(let [calrc (read-string (slurp (clojure.java.io/file (System/getenv "HOME") ".calendar-seq.rc")))
         now (clj-time.core/now)
-        later (clj-time.core/plus now (clj-time.core/days 5)) 
-        
+        later (clj-time.core/plus now (clj-time.core/days 25)) 
         ]
-    (query-cal-data now later calrc))
+    (query-cal-data now later (first (vals calrc)))) 
+
+(let [response @(http/report "https://www.nundrum.net/owncloud/remote.php/caldav/calendars/robbie/defaultcalendar/")]
+  ;(.printStackTrace (:error response))
+response
+  )
 
  (pprint (map (comp ical-map #(apply str %) :content) 
       (l/select

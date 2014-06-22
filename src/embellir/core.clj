@@ -1,20 +1,21 @@
 (ns embellir.core
+  (:gen-class :main true)
   (:import [java.io File])
-  (:require [embellir.illustrator :as illustrator]
-            [embellir.curator :as curator]
-            [embellir.bitdock :as bitdock]
-            [clojure.java.io :as io]
-            )
+  (:require 
+     embellir.illustrator.window
+     [embellir.curator :as curator]
+     [embellir.bitdock :as bitdock]
+     [clojure.java.io :as io]
+     )
   )
 
 
 (defn read-config-file [filename]
   (with-open [rd (io/reader filename)]
     (doseq [line (line-seq rd)]
+      (println line)
       (bitdock/handle-command line)))
-;  (embellir.illustrator.systems/relayout)
-         
-         )
+  (embellir.illustrator.layout/relayout))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -25,20 +26,11 @@
 ; start the bitdock
 (bitdock/start-bitdock)
 
+;the illustrator is started when embellir.illustrator.window is required in the ns
 
-(defn main [& args]
-  (when 
-          
-          (.exists (File. (str (System/getenv "HOME") "/.embellirrc")) )
-          ;(.exists (File. ^String (first args)) )
-          
-    (read-config-file (str (System/getenv "HOME") "/.embellirrc"))
-    
-    )
-
-  ; start the illustrator
-;  (illustrator/start-illustrator)
-  nil
-  )
+(defn -main [& args]
+    (when (.exists (File. (str (System/getenv "HOME") "/.embellir.startup")) )
+      (read-config-file (str (System/getenv "HOME") "/.embellir.startup")) )
+  nil)
 
 

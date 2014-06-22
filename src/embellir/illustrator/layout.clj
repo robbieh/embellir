@@ -22,7 +22,10 @@
 
 (defn move-entity [entname x y]
   (let [canvas (get-in @entities [entname :canvas]) ]
-    (when canvas (move! canvas :to [x y]))))
+    (when canvas (move! canvas :to [x y])
+      ))
+  
+  )
 
 (defn resize-entity [entname w h]
  (let [canvas (get-in @entities [entname :canvas])
