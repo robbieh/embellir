@@ -29,7 +29,7 @@ A quick list of samples:
 	LAYOUT layout-tiled
 	CURATE weather cpu ...
 	ILLUSTRATE polarclock cpu weather ...
-	SUPPLY curioname {:keyword "test" :text "this is a test\nmore test\nmore test"}D
+	SUPPLY curioname {:keyword "test" :text "this is a test\nmore test\nmore test"}
 
 ## Aspirations
 

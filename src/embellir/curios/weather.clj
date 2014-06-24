@@ -13,6 +13,7 @@
 ; :function update-weather }
 
 (def nws-rss)
+(def radar-url "http://radar.weather.gov/RadarImg/N0R/FFC_N0R_0.gif")
 
 (defn get-weather
   []

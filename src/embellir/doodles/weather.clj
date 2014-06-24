@@ -1,8 +1,20 @@
 (ns embellir.doodles.weather
   (:gen-class)
-  (:use [embellir.illustrator :as illustrator]
-        [embellir.curator :as curator]
-        [quil.core])
+  (:import 
+     (java.util Calendar Date)
+     (java.awt Graphics2D RenderingHints)
+     (java.awt.image BufferedImage)
+     )
+  (:require 
+     [embellir.illustrator :as illustrator]
+     [embellir.curator :as curator]
+     [clj-time.core :as clj-time]
+     [clj-time.local])
+  (:use     
+     seesaw.graphics
+     seesaw.color
+     seesaw.font
+     )
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -10,32 +22,48 @@
 ; this is stupid simple at the moment ... TODO: nice graphics
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(def entityhints {:sleepms 60000})
+(def droidSansMono (font :name "DroidSansMono" :size 30))
+
 (defn draw-weather 
-  [entity]
-  (let [width (:width (:bound entity))
-        height (:height (:bound entity))
+  [entity ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  (let [width (.getWidth panel)
+        height (.getHeight panel)
         hawidth (* 0.5 height)
         haheight (* 0.5 width)
-        w (get-curio "weather")
+        w (curator/get-curio "weather")
         ]
     ;(text-mode :model)
     ;(text-size 30)
     ;(text-align :center)
-    (text (:weather w) 0 0)
-    (translate 0 (+ (text-ascent) (text-descent)))
-    (text (:temp_f w) 0 0)
-    (translate 0 (+ (text-ascent) (text-descent)))
-    (text (:wind_dir w) 0 0)
-    (translate 0 (+ (text-ascent) (text-descent)))
-    (text (:wind_mph w) 0 0)
+    (.setColor graphics (to-color "#C8FFC8"))
+    (.setFont graphics droidSansMono)
+
+    (.drawString graphics  (:weather w) 0 40)
+    ;    (translate 0 (+ (text-ascent) (text-descent)))
+    (.drawString graphics  (:temp_f w) 0 80)
+    ;    (translate 0 (+ (text-ascent) (text-descent)))
+    (.drawString graphics  (:wind_dir w) 0 120)
+    ;    (translate 0 (+ (text-ascent) (text-descent)))
+    (.drawString graphics  (:wind_mph w) 0 160)
     ))  
 
-(defn illustrate []
-  (println "foo")
-  (illustrator/create-entity "weather" 
-                             (position 300 300) 
-                             (bound 100 100) 
-                             (drawing embellir.doodles.weather/draw-weather)))
+(defn draw-doodle [ent ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  (draw-weather (curator/get-curio "weather") panel graphics)
+  )
 
+(comment defn illustrate []
+  (println "foo")
+  (let [bi (java.awt.image.BufferedImage. (illustrator/scrwidth) (illustrator/scrheight) java.awt.image.BufferedImage/TYPE_INT_ARGB)
+        gr (.createGraphics bi)]
+    (doto gr (.setRenderingHint RenderingHints/KEY_ANTIALIASING RenderingHints/VALUE_ANTIALIAS_ON))
+
+
+    (illustrator/create-entity "weather" 
+                 (illustrator/position 0 0)
+                 (illustrator/bound (illustrator/scrwidth) (illustrator/scrheight) :round)
+
+                 (drawing embellir.doodles.weather/draw-weather bi gr)))
+  )
 
 

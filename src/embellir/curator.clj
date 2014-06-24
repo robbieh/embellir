@@ -17,6 +17,7 @@
 ;              :time-to-live (* 1000 60 60)
 ;              :receiver-function nil}
 ;   "nowplaying" {...}}
+;   
 (defonce collection (atom {}))
 
 ;remember: .put .take .peek
@@ -32,12 +33,25 @@
                              (get-in @collection [itemname :time-to-live])
                              (clj-time.coerce/to-long (clj-time.local/local-now))))}))
 
+(defn find-curio [itemname]
+  (let [home (System/getProperty "user.home")
+        exts [".clj"]
+        path ["src/embellir/curios" 
+              (clojure.java.io/file home ".embellir/embellir/curios")]]
+         
+      (first (drop-while nil?
+        (for [ e exts p path ] 
+          (let [f (clojure.java.io/file p (str itemname e))]
+            (if (.exists f) [f e] )))))
+        
+        )
+  )
+
 (defn get-curation-map [itemname]
   "try to find function that looks like embellir.curios.<itemname>/curation-map"
   "or else the fully-qualified function name, such as drh.datasupplier.curio/curation-map"
   (let [fqi (str "embellir.curios." itemname)]
-;    (when-not (find-ns (symbol fqi))
-      (load-file (str "src/embellir/curios/" itemname ".clj"));)
+      (load-file (str (first (find-curio itemname))))
     (when (find-ns (symbol fqi))
       (if-let [func (resolve (symbol fqi "curation-map"))] (func) (println "could not find" itemname)))))
 
@@ -94,7 +108,7 @@
     (swap! itematom itemfunc)))
 
 (defn manage-queue []
-  (loop [item (.take updateq)]
+  (loop [item (.take ^java.util.concurrent.PriorityBlockingQueue updateq)]
     ;    (println "found item: " item (get item :collection-key))
     (try
       (let [itemtime (:time item)
@@ -107,7 +121,7 @@
           (do (Thread/sleep (min timedifference 1000))
             (.put updateq item))))
       (catch Exception e (str "Exception in manage-queue: " (.getMessage e))))
-    (recur (.take updateq))))
+    (recur (.take ^java.util.concurrent.PriorityBlockingQueue updateq))))
 
 (defn start-curator []
   "Starts the curator in a separate thread"
