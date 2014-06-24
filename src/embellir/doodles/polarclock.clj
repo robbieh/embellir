@@ -286,7 +286,8 @@
 
 (defn draw-timeclock 
   [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
-  (let [width (.getWidth panel)
+  (let [
+        width (.getWidth panel)
         height (.getHeight panel)
         size (min height width)
         centerx (* 0.5 width)
@@ -373,6 +374,30 @@
 ;
   )
  ))
+
+(defn draw-prep [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  (let [
+        width (.getWidth panel)
+        height (.getHeight panel)
+        size (min height width)
+        centerx (* 0.5 width)
+        centery (* 0.5 height)
+
+        graphics-potato {
+                         :width width
+                         :height height
+                         :size size
+                         :centerx centerx
+                         :centery centery
+                         }
+
+        funcs [draw-timeclock draw-monthclock ] 
+        diams [ ]
+        
+        ]
+    
+    )
+  )
 
 (defn draw-doodle [ent ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
 ;  (push-matrix)

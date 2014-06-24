@@ -33,12 +33,25 @@
                              (get-in @collection [itemname :time-to-live])
                              (clj-time.coerce/to-long (clj-time.local/local-now))))}))
 
+(defn find-curio [itemname]
+  (let [home (System/getProperty "user.home")
+        exts [".clj"]
+        path ["src/embellir/curios" 
+              (clojure.java.io/file home ".embellir/embellir/curios")]]
+         
+      (first (drop-while nil?
+        (for [ e exts p path ] 
+          (let [f (clojure.java.io/file p (str itemname e))]
+            (if (.exists f) [f e] )))))
+        
+        )
+  )
+
 (defn get-curation-map [itemname]
   "try to find function that looks like embellir.curios.<itemname>/curation-map"
   "or else the fully-qualified function name, such as drh.datasupplier.curio/curation-map"
   (let [fqi (str "embellir.curios." itemname)]
-;    (when-not (find-ns (symbol fqi))
-      (load-file (str "src/embellir/curios/" itemname ".clj"));)
+      (load-file (str (first (find-curio itemname))))
     (when (find-ns (symbol fqi))
       (if-let [func (resolve (symbol fqi "curation-map"))] (func) (println "could not find" itemname)))))
 
