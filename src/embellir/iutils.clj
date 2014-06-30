@@ -50,5 +50,5 @@
   (/ (* degrees PI radius) 180)
   )
 
-
+(defn half [x] (* 0.5 x))
 

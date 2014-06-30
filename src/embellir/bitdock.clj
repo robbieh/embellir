@@ -15,6 +15,7 @@
     [embellir.curator :as curator]
     [embellir.illustrator.layout]
     [embellir.illustrator.entities]
+    [embellir.illustrator.colors :as colors]
     [server.socket]
     )
   )
@@ -59,12 +60,19 @@
     (println "de-illustrating:" item )
     (embellir.illustrator.entities/remove-entity item)))
 
-(def cmd-map { "supply" supply
+(defn palette [data]
+  (println "setting palette to:" data)
+  (colors/set-palette data)
+  )
+
+(def cmd-map {"supply" supply
               "layout" layout 
               "curate" curate
               "illustrate" illustrate
               "deillustrate" deillustrate
+              "palette" palette
               })
+
 (defn handle-command [line]
   (when-not (= \ (first (str/trim line)))
     (let [[cmd remainder] (str/split line #" " 2)]

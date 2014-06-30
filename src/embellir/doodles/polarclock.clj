@@ -3,7 +3,8 @@
   (:import (java.util Calendar Date)
      (java.awt Graphics2D RenderingHints)
      (java.awt.image BufferedImage))
-  (:require [embellir.illustrator :as illustrator]
+  (:require 
+     [embellir.illustrator :as illustrator]
      [embellir.curator :as curator]
      [clj-time.core :as clj-time]
      [clj-time.local]
@@ -16,6 +17,7 @@
      seesaw.font
      embellir.iutils
      embellir.illustrator.colors
+     [embellir.illustrator.entitylist :only [entities]]
      )
   )
 
@@ -23,7 +25,7 @@
 
 (def droidSansMono (font :name "DroidSansMono" :size 40))
 
-(def monthctl {:back 7 :forward 14 :daymarker :number :calendars [:owncloud-caldav]})
+;(def monthctl {:back 7 :forward 14 :daymarker :number :calendars [:owncloud-caldav]})
 
 ;(def PI java.lang.Math/PI)
 (def TWO-PI (* 2 PI))
@@ -78,9 +80,9 @@
     (apply merge-with (comp vec concat) (map reduce-ical data))))
 
 (defn get-cal-dates 
-  "Takes the list of calendars in monthctl var, along with the calendar curio,
+  "Takes the list of calendars in monthctl config map, along with the calendar curio,
   and returns a map of dates such that {\"datestr\" [\"item1\" \"item2\"]}"
-  [cal-curio]
+  [cal-curio monthctl]
   (let [cal-list (:calendars monthctl)]
     (first (map (partial invert-cal cal-curio) cal-list))))
 
@@ -89,30 +91,33 @@
 
 (defn draw-today 
   "draws the wedge for the current day"
-  [^java.awt.Graphics2D graphics today y degs]
+  [^java.awt.Graphics2D graphics today y fsize]
   (let [dstr    (str (clj-time/day today))
-        metrics (.getFontMetrics graphics droidSansMono)
-        fheight (.getHeight metrics)
-        fwidth  (* 0.5 (.stringWidth metrics dstr))
         p embellir.illustrator.colors/default-palette
         secondary (:secondary p)
         mstroke (stroke :width 3)
         mstyle (style :foreground (:highlight secondary) :background (:fill secondary) :stroke mstroke )
+        droidSansMono (font :name "DroidSansMono" :size (half fsize))
+        metrics (.getFontMetrics graphics droidSansMono)
+        fheight (.getHeight metrics)
+        fwidth  (half (.stringWidth metrics dstr))
         ]
     (.setColor graphics (:highlight secondary))
     (.setFont graphics droidSansMono)
-    (rotate graphics (* 0.5 degs))
+;    (rotate graphics (half degs))
 
     (push graphics
-      (translate graphics 0 y)
-      (rotate graphics 180)
+;      (translate graphics 0 y)
+;      (rotate graphics 180)
       (translate graphics (- fwidth) 0)
-      (.drawString graphics dstr 0 fheight) )
+      (.drawString graphics dstr 0 (int (+ fheight (half fheight)))) )
 
-    (rotate graphics (- (* 0.5 degs))) )
+;    (rotate graphics (- (half degs))) 
+    
+    )
   )
 
-(defn cal-item-shape [w h]
+(defn cal-day-shape [w h]
   (let [w  (double w)
         h  (double h)
         qw (* 0.125 w)]
@@ -130,53 +135,74 @@
 
 
 (defn draw-cal-item
-  "draws a calendar item onto day wedge"
-  [^java.awt.Graphics2D graphics today y degs diam item]
+  "draws a calendar item marker onto day wedge"
+  [^java.awt.Graphics2D graphics today item itemdiam mode]
   (let [dstr    (str (clj-time/day today))
         metrics (.getFontMetrics graphics droidSansMono)
         fheight (.getHeight metrics)
-        fwidth  (* 0.5 (.stringWidth metrics dstr))
+        fwidth  (half (.stringWidth metrics dstr))
         p embellir.illustrator.colors/default-palette
         secondary (:secondary p)
-        mstroke (stroke :width 5)
+        strokewidth 4
+        mstroke (stroke :width strokewidth)
         mstyle (style :foreground (:main secondary) :background (:fill secondary) :stroke mstroke )
+        item-count (count item)
+        mode (or mode :circles)
     ;    mstyle (style :foreground (:main secondary) :background (:main secondary) )
         ]
    
     ;this draws a bar per calendar item for this day
-    (push graphics
+    (when (= mode :bars) 
+      (push graphics
           (rotate graphics 180)
-          (dotimes [i (count item)] 
+          (dotimes [i item-count] 
             (draw graphics 
-                  (iarc 0 0 (+ (* 20 i) diam) (+ (* 20 i) diam) 0 degs) mstyle
+                  (line (0 0 5 5) mstyle)
+;                  (iarc 0 0 (+ (* 20 i) diam) (+ (* 20 i) diam) 0 degs) mstyle
                   ;(iarc 0 0 50 50 0 30) mstyle
-                  )))
+                  ))))
+
+    ;this draws circles to nest in the cups 
+    (when (= mode :circles) 
+      (push graphics
+;          (rotate graphics (half degs))
+          (translate graphics 0 strokewidth)
+          (rotate graphics 90)
+          (let [slicesize (/ 360 item-count)
+                rotation  (map #(* slicesize %) (range item-count))
+                dia       (/ itemdiam item-count)
+                offset    (case item-count
+                            1 0
+                            2 (half itemdiam)
+                            3 (/ itemdiam 2.15470)
+                            4 (/ itemdiam 2.41421)
+                            5 (/ itemdiam 2.70130)
+                            :else (/ itemdiam 3)
+                            ) ;thank you, http://mathworld.wolfram.com/CirclePacking.html
+                              ;even though this is TOTALLY a cheat
+                ]
+            (doseq [r rotation]
+              (push graphics
+                    (rotate graphics r)
+                    (draw graphics (circle 0 offset dia) mstyle
+                          ))))))
+
     
-    (comment push graphics
-          (translate graphics 0 y)
-          (rotate graphics 180)
-          (rotate graphics (* 0.5 degs))
-          (dotimes [i (count item)] 
-            (draw graphics 
-                  (cal-item-shape 105 50) mstyle
-                  
-                  )))
     
     )
   )
 
-(embellir.illustrator.renderer/repaint-entity "polarclock")
 
 (defn draw-callout [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
  (let [width (.getWidth panel)
        height (.getHeight panel)
        size (min height width)
-       centerx (* 0.5 width)
-       centery (* 0.5 height)
-       diam  (* 0.5 (* 0.95 size))
+       centerx (half width)
+       centery (half height)
+       diam  (half (* 0.95 size))
        cstroke (stroke :width 3)
        cstyle (style :foreground (color 65 100 25) :background (color 10 10 10 0) :stroke cstroke )
-       diam (* 0.5 size)
+       diam (half size)
        ]
    (push graphics
          (translate graphics centerx centery)
@@ -188,17 +214,18 @@
    ) )
 
 (defn draw-monthclock 
-  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
-  (let [
+  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics config diamlow diamhigh]
+  (let [monthctl (:monthctl config)
         width (.getWidth panel)
         height (.getHeight panel)
         size (min height width)
-        centerx (* 0.5 width)
-        centery (* 0.5 height)
-        diam  (* 0.5 (* 0.95 size))
-        tmdiam (* 0.5 (* 0.73 size))
-        mdiam (* 1 (* 0.78 size))
-        hdiam (* 0.5 (- diam tmdiam))
+        centerx (half width)
+        centery (half height)
+        diamhigh  (* size diamhigh) ;diam
+        diamlow (* size diamlow)    ;tmdiam
+        diamdiff (- diamhigh diamlow)
+        hdiff (half diamdiff)
+        mdiam diamlow ;(+ diamlow (* 0.01 diamdiff))
         p embellir.illustrator.colors/default-palette
         secondary (:secondary p)
         mstroke (stroke :width 3)
@@ -214,7 +241,9 @@
         spanival (clj-time/interval start-date end-date)
         deg-per-day (/ 360 days-this-month)
         deg-per-day-span (/ 270 span ) ;270 to get 3/4ths of circle
-        caldates (get-cal-dates (curator/get-curio "calendar"))
+        day-width (circle-arc-length (half diamhigh) deg-per-day)
+        caldates (get-cal-dates (curator/get-curio "calendar") monthctl)
+        daymode (or (:daymode monthctl) :ticks)
         ]
 ;    (-> (curator/get-curio "calendar") first key type)
     ;this block draws the "month" mark
@@ -230,71 +259,64 @@
     (push graphics
           (translate graphics centerx centery)
           (rotate graphics -180)
-          (rotate graphics (* deg-per-day day-today))
-          (rotate graphics (- (* deg-per-day-span (inc (:back monthctl)))))
+          (rotate graphics (* deg-per-day day-today)) ;rotate to today
+          (rotate graphics (- (* deg-per-day-span (inc (:back monthctl))))) ;rotate back to show past days
           ;if the 'take' isn't added, the actual number of days returned fluctuates! hrm.
           (doseq [d (take span (map clj-time.coerce/to-local-date (interval-seq spanival (clj-time/days 1))))]
-            ;(draw graphics (line 0 (+ hdiam tmdiam) 0 diam ) mstyle)
+            ;(draw graphics (line 0 (+ hdiff tmdiam) 0 diam ) mstyle)
             ;the block below finds and draws event symbols
-            (let [dstr (clj-time.format/unparse-local (clj-time.format/formatters :basic-date) d)
-                  item (get caldates dstr) ]
-              (when item 
-                (comment draw-cal-item graphics d diam deg-per-day-span (+ hdiam mdiam) item) )
-            (push graphics
-                  (translate graphics 0 diam)
-                  (rotate graphics 180)
-                  (rotate graphics (* 0.5 deg-per-day-span))
-                    (draw graphics 
-                          (cal-item-shape 105 50) xstyle
 
-                          )))
-            (if (= d today) (draw-today graphics d diam deg-per-day-span))
+            (push graphics
+                  (when (= daymode :ticks)
+                    (push graphics
+                    (rotate graphics (* -0.5 deg-per-day))
+                    (draw graphics (line 0 (half diamlow) 0 (half diamhigh )) mstyle))
+                    ) 
+                  ;this draws the curved-wedge pieces for each day
+                    (translate graphics 0 (half diamhigh)) ;jump to outside ring
+                    (rotate graphics 180) ;turn around to face center of circle again
+                    (when (= daymode :curves)
+                    (push graphics
+                          (translate graphics  (- (half day-width)) 0) ;slide over to middle of wedge
+                          (draw graphics 
+                                (cal-day-shape day-width (half hdiff)) xstyle )))
+                  ;this draws the marks denoting calendar items
+                  ;
+                  (let [dstr (clj-time.format/unparse-local (clj-time.format/formatters :basic-date) d)
+                        item (get caldates dstr) ]
+                    (when item 
+                      (translate graphics 0 (half hdiff))
+                      (draw-cal-item graphics d item (half (half hdiff)) (:calmode monthctl)) ))
+
+                 (if (= d today) (draw-today graphics d (half diamhigh) hdiff )))
 
             (rotate graphics deg-per-day-span)
             )
-;          (draw graphics (line 0 (+ hdiam tmdiam) 0 diam ) mstyle)
+          (when (= daymode :ticks)
+                  (push graphics
+                    (rotate graphics (* -0.5 deg-per-day))
+                    (draw graphics (line 0 (half diamlow) 0 (half diamhigh )) mstyle))
+
+            )
           ) 
 
     )
 
-  ;  (rotate (- PI))
-  ;(stroke 0 75 25)
-  ;(stroke-weight 1)
-  ;(let [width (:width (:bound entity))
-  ;      x     (* width 0.5)
-  ;      y     (* width 0.5)]
-  ;  (doseq [day (range 0 (.getActualMaximum (calNow) java.util.Calendar/DAY_OF_MONTH))]
-  ;    (line  (* width (* 0.90 0.5))  0 (* width (* 0.95 0.5)) 0)
-  ;    (rotate (radians-for-this-month))
-  ;    )
-  ;  )
-  ;(stroke-weight 3)
-  ;(stroke 10 95 0)
-  ;(pop-matrix)(push-matrix)
-  ;(let [width (:width (:bound entity))
-  ;      diam (* 0.95 width)]
-  ;  (rotate (* (clj-time/day (clj-time.local/local-now)) (radians-for-this-month)))
-  ;  (line  (* width (* 0.85 0.5))  0 (* width (* 0.95 0.5)) 0)
-  ;  (rotate (- (radians-for-this-month)))
-  ;  (line (* width (* 0.85 0.5))  0 (* width (* 0.95 0.5)) 0)
-  ;  (stroke-weight 5)
-  ;  (arc 0 0 diam diam 0 (radians-for-this-month))
-  ;  )
-  ;(pop-style)
-  ;(pop-matrix))
 )
 
 (defn draw-timeclock 
-  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics config diamlow diamhigh]
   (let [
         width (.getWidth panel)
         height (.getHeight panel)
         size (min height width)
-        centerx (* 0.5 width)
-        centery (* 0.5 height)
-        diam  (* 0.7 size)
-        tmdiam (* 0.6 size)
-        sdiam (* 0.5 size)
+        centerx (half width)
+        centery (half height)
+        diam  (* size diamhigh)
+        sdiam (* size diamlow)
+        halfdiam (half (- diam sdiam))
+        hrstrk (* 0.50 halfdiam)
+        tmdiam (+ sdiam halfdiam)
     ;    x     (:x (:position entity))
     ;    y     (:y (:position entity))
         ;stoprad  (minutes-to-radians (clj-time/minute (clj-time/now)))
@@ -312,13 +334,13 @@
         secondary (:secondary p)
         hrstroke (stroke :width 2)
         hrstroke2 (stroke :width 3)
-        minstroke1 (stroke :width 20)
-        minstroke2 (stroke :width 16)
-        hrstyle (style :foreground (:main primary) :background (:fill primary) :stroke hrstroke )
-        hrstyle2 (style :foreground (:main primary) :background (:fill primary) :stroke hrstroke )
-        minstyle (style :foreground (:highlight primary) :background (:fill primary) :stroke hrstroke2 )
-        minstyle1 (style :foreground (:highlight primary) :background (:fill primary) :stroke minstroke1 )
-        minstyle2 (style :foreground (:main primary) :background (:fill primary) :stroke minstroke2 )
+        minstroke1 (stroke :width hrstrk)
+        minstroke2 (stroke :width (- hrstrk (* 0.25  hrstrk)))
+        hrstyle (style :foreground (:main primary) :background (color 0 0 0 0) :stroke hrstroke )
+        hrstyle2 (style :foreground (:main primary) :background (color 0 0 0 0) :stroke hrstroke )
+        minstyle (style :foreground (:highlight primary) :background (color 0 0 0 0) :stroke hrstroke2 )
+        minstyle1 (style :foreground (:highlight primary) :background (color 0 0 0 0) :stroke minstroke1 )
+        minstyle2 (style :foreground (:main primary) :background (color 0 0 0 0) :stroke minstroke2 )
         ]
     (push graphics 
           (translate graphics centerx centery)
@@ -328,8 +350,10 @@
 ;                (arc 0 0 tmdiam tmdiam 0 270) tmpstyle
 
       ; an hour-size mark for the hour
-                
-      (iarc 0 0 tmdiam tmdiam hourdeg 30) hrstyle; 30 because 12h clock!
+      (iarc 0 0 tmdiam tmdiam hourdeg 30 java.awt.geom.Arc2D/OPEN) hrstyle; 30 because 12h clock!
+
+      ; and a line around to the current minute
+;      (iarc 0 0 sdiam sdiam 0 (+ hourdeg minofhourdeg)) hrstyle
 
       ;   ;this shows 'hour markers' for a 24h clock
       ;    (doseq [x (range 0 23)]
@@ -339,12 +363,12 @@
 
       ; and an extra minute-dot on the hour...
       ; with a line out to the minutes ring
-     (iarc 0 0 tmdiam tmdiam (+ hourdeg minofhourdeg -0.01) 0.01 ) hrstyle2
+     (iarc 0 0 tmdiam tmdiam (+ hourdeg minofhourdeg -0.01) 0.01 java.awt.geom.Arc2D/OPEN) hrstyle2
 
     ; the minutes ; drawn in two parts
 ;    (stroke 0 220 20)
 ;    (stroke-weight 3)
-   (iarc 0 0 diam diam 0 (+ minofhourdeg hourdeg) ) minstyle
+   (iarc 0 0 diam diam 0 (+ minofhourdeg hourdeg) java.awt.geom.Arc2D/OPEN) minstyle
 ;    (let []
 ;      (push-matrix)
 ;      (rotate (+ minofhourrad hourrad ))
@@ -354,10 +378,10 @@
 ;
 ;    (stroke 0 90 0)
 ;    (stroke-weight 20)
-    (iarc 0 0 diam diam 0 stopdeg) minstyle1
+    (iarc 0 0 diam diam 0 stopdeg java.awt.geom.Arc2D/OPEN) minstyle1
 ;    (stroke 0 220 20)
 ;    (stroke-weight 16)
-    (iarc 0 0 diam diam 0 stopdeg) minstyle2
+    (iarc 0 0 diam diam 0 stopdeg java.awt.geom.Arc2D/OPEN) minstyle2
 ;
 ;    ; let's see... red 'dot' on the GMT hour
 ;    (stroke 250 25 25)
@@ -375,13 +399,75 @@
   )
  ))
 
-(defn draw-prep [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+(defn draw-forecastclock 
+  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics diamlow diamhigh]
   (let [
         width (.getWidth panel)
         height (.getHeight panel)
         size (min height width)
-        centerx (* 0.5 width)
-        centery (* 0.5 height)
+        centerx (half width)
+        centery (half height)
+        dlow (* size diamlow 0.5)
+        dhigh (* size diamhigh 0.5)
+        
+        p embellir.illustrator.colors/default-palette
+        primary (:primary p)
+
+        stroke (stroke :width 5)
+        style (style :foreground (:main primary) :stroke stroke )
+        ]
+    (push graphics
+          (translate graphics centerx centery)
+          (draw graphics
+            (circle 0 0 dlow) style
+            (circle 0 0 dhigh) style
+                
+                )
+          )
+    )
+ 
+  )
+
+(defn draw-financeclock
+  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics diamlow diamhigh]
+  
+  )
+
+(defn draw-tenths [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  (let [
+        width (.getWidth panel)
+        height (.getHeight panel)
+        size (min height width)
+        centerx (half width)
+        centery (half height)
+
+        p embellir.illustrator.colors/default-palette
+        primary (:primary p)
+
+        stroke (stroke :width 1)
+        style (style :foreground (:main primary) :stroke stroke )
+        
+        ]
+    (push graphics
+          (translate graphics centerx centery)
+          
+          (doseq [d (range 1 6)]
+            (draw graphics
+                  (circle 0 0 (* (/ size 10) d)) style
+                  )
+            )
+          )
+    )
+  )
+
+(defn draw-prep [ent ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  (let [config (:config (get @entities ent))
+        width (.getWidth panel)
+        height (.getHeight panel)
+        size (min height width)
+        centerx (half width)
+        centery (half height)
+
 
         graphics-potato {
                          :width width
@@ -391,20 +477,36 @@
                          :centery centery
                          }
 
-        funcs [draw-timeclock draw-monthclock ] 
-        diams [ ]
+        ;funcs [draw-timeclock draw-monthclock draw-forecastclock draw-financeclock] 
+        funcs [draw-timeclock draw-monthclock ]
+        func-seq (map partial funcs (repeat panel) (repeat graphics) (repeat config))
+        diameters [[0.6 0.7] [0.8 0.95] [0.5 0.6] [0.4 0.6]]
         
         ]
+
+(doall (map apply func-seq  diameters))
+         
+;  (draw-timeclock panel graphics 0.6 0.7)
+;  (draw-monthclock panel graphics 0.8 0.9)
+;  (draw-tenths panel graphics)
     
     )
+  nil
+
+
+
   )
 
+
 (defn draw-doodle [ent ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
+  (draw-prep ent panel graphics)
 ;  (push-matrix)
-  (draw-timeclock panel graphics)
-  (draw-monthclock panel graphics)
  ; (try (draw-monthclock panel graphics) (catch Exception e (println (str "polarclock month: " (.getMessage e)))))
 ;  (pop-matrix)
  ; (draw-monthclock entity)
   )
+
+;this forces a redraw when the file is reloaded
+(embellir.illustrator.renderer/repaint-entity "polarclock")
+
 

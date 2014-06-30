@@ -21,6 +21,9 @@
 
 (defn uniquename [n] (str n)) ;TODO: check entity list
 
+(defn get-entity-config [entname]
+  (try
+    ((keyword entname) (:curios (read-string (slurp (clojure.java.io/file (System/getProperty "user.home") ".embellir.rc")))))))
 
 (defn find-entity [ent]
   (let [home (System/getProperty "user.home")
@@ -71,13 +74,17 @@
              t (timer (partial renderer/repaint-entity itemname ) :repeats? true :delay sleepms :start? false)
              entmap (conj params {:canvas canvas :sleepms sleepms :timer t})
              entityhints (try (deref (resolve (symbol fqi "entityhints"))) (catch Exception e))
-
+             entityconfig {:config (get-entity-config entname')}
              ]
          ;(println "loading " entname' "as" itemname " with hints " entityhints)
          (.start ^javax.swing.Timer t)
          (.setOpaque ^javax.swing.JPanel canvas false)
          (swap! entities assoc itemname entmap) 
+         (println @entities)
          (when entityhints (swap! entities update-in [itemname] merge entityhints))
+         (println @entities)
+         (when entityconfig (swap! entities update-in [itemname] merge entityconfig))
+         (println @entities)
          (config! window/xyz :items (conj (config window/xyz :items) canvas))
          (relayout)
          (get @entities itemname) ; just so something sensible is returned
