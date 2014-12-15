@@ -1,47 +1,38 @@
 (ns embellir.curios.forecast
   (:gen-class)
-  (:require  [clojure.java.io :as io]
-            [clojure.xml :as xml]
-            [clojure.zip :as zip]
-            [clojure.data.zip.xml :as zxml]
-            )
+  (:use [weathergov-hourly-forecast.core :only [get-forecast-table pivot-data]])
   )
 
-;{:name "weather" 
-; :atom (get-weather)
-; :time-to-live (* 1000 60 30) ; half an hour
-; :function update-weather }
-; 
-; using the National Digital Forecast Database
-; http://graphical.weather.gov/xml/
-;
 
-(def nws-rss)
-
-(defn get-weather
+(defn get-forecast
   []
-  (into {} (for [ c (zxml/xml-> 
-                      (->> @nws-rss io/input-stream xml/parse zip/xml-zip) 
-                      clojure.zip/children)] 
-             [(:tag c) (first (:content c))]))) 
+  (pivot-data (get-forecast-table 33.82 -84.36))) 
 
-(defn setup-weather
+(defn setup-forecast
   []
-  (def nws-rss (atom "http://w1.weather.gov/xml/current_obs/KPDK.xml"))
-  (get-weather))
+  (get-forecast))
 
-(defn update-weather
+(defn update-forecast
   [wdata] 
-  (merge wdata (get-weather)))
+  (merge wdata (get-forecast)))
 
-(defn receive-weather
-  [wdata rmap]
-  (merge wdata rmap))
-
-(defn curation-map [] {:atom (atom (embellir.curios.weather/setup-weather))
-                       :function embellir.curios.weather/update-weather
-                       :time-to-live (* 1000 60 30)
-                       :receiver-function embellir.curios.weather/receive-weather})
+(defn curation-map [] {:atom (atom (embellir.curios.forecast/setup-forecast))
+                       :function embellir.curios.forecast/update-forecast
+                       :time-to-live (* 1000 60 60)
+                       :receiver-function nil})
 
 
+(comment
+  (embellir.curator/curate "forecast")
+  (embellir.curator/get-curio "forecast")
+  
+  ;visually comparing this to output from website...
+  ;returns date and temp
+  (let [c (embellir.curator/get-curio "forecast")
+        f (fn [k] 
+            [k (:TemperatureF (get c  k))]     
+            )]
+    (map f (keys c)))
 
+
+    )

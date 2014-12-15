@@ -150,6 +150,36 @@
         )))
   )
 
+;;;;;;;;;;;;; features-grid layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn layout-feature-grid []
+  (layout-background)
+  (if (nil? @central-feature) (set-central-feature))
+  (let [w           (.getWidth window/xyz) 
+        h           (.getHeight window/xyz) 
+        orientation (if (> h w) :v :h )
+        margin      (if (= orientation :v) (* 0.1 h) (* 0.1 w))
+        marginseq   (map * (repeat margin) (range))
+        bottom      (- h margin)
+        candidates  (remove #(= % @central-feature) (list-layout-candidates))
+        w           (if (= orientation :v) w (- w margin))
+        h           (if (= orientation :h) h (- h margin))
+        ]
+    (println "CF:" @central-feature ", Candidates:" candidates)
+    (if (= orientation :h)
+      (do  ;horizontal orientation
+        (move-entity @central-feature margin 0)
+        (resize-entity @central-feature w h)
+        (doall (map move-entity candidates (repeat 0) marginseq))
+        (doall (map resize-entity candidates (repeat margin) (repeat margin)))
+        
+        )  
+      (do  ;vertical orientation
+        (move-entity @central-feature 0 0)
+        (resize-entity @central-feature w h)
+        (doall (map move-entity candidates marginseq (repeat bottom)))
+        (doall (map resize-entity candidates (repeat margin) (repeat margin)))
+        )))
+  )
 ;;;;;;;;;;;;; embossed corner layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn layout-embossed-corner []
   (layout-background)

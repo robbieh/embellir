@@ -79,6 +79,9 @@
         ]
     (apply merge-with (comp vec concat) (map reduce-ical data))))
 
+(defn safe-divide [n d]
+  (if (= 0 d) 0 (/ n d)))
+
 (defn get-cal-dates 
   "Takes the list of calendars in monthctl config map, along with the calendar curio,
   and returns a map of dates such that {\"datestr\" [\"item1\" \"item2\"]}"
@@ -321,12 +324,13 @@
     ;    y     (:y (:position entity))
         ;stoprad  (minutes-to-radians (clj-time/minute (clj-time/now)))
         stopdeg  (minutes-to-degrees (clj-time/minute (clj-time/now)))
-        ;gmtrad  (hour-to-radians (clj-time/hour (clj-time/now)))
+        gmtdeg  (+ (hour-to-degrees (clj-time/hour (clj-time/now)))(safe-divide 360 (minutes-to-degrees (clj-time/minute (clj-time/now)))))
+        hrofdaydeg  (+ (hour-to-degrees (clj-time/hour (clj-time.local/local-now)))(safe-divide 360 (minutes-to-degrees (clj-time/minute (clj-time.local/local-now)))))
         ;hourrad  (hour-to-radians-12 (clj-time/hour (clj-time.local/local-now)))
         hourdeg  (hour-to-degrees-12 (clj-time/hour (clj-time.local/local-now)))
         ;secrad  (minutes-to-radians (clj-time/sec (clj-time.local/local-now)))
         ;secdeg (minutes-to-degrees (clj-time/second (clj-time.local/local-now)))
-;       onerad (radians 1)
+       onerad (radians 1)
         ;minofhourrad (/ stoprad 14)
         minofhourdeg (/ stopdeg 15) 
         p embellir.illustrator.colors/default-palette
@@ -341,6 +345,8 @@
         minstyle (style :foreground (:highlight primary) :background (color 0 0 0 0) :stroke hrstroke2 )
         minstyle1 (style :foreground (:highlight primary) :background (color 0 0 0 0) :stroke minstroke1 )
         minstyle2 (style :foreground (:main primary) :background (color 0 0 0 0) :stroke minstroke2 )
+        hrofdaystyle (style :foreground (:highlight secondary) :background (color 0 0 0 0) :stroke minstroke2 )
+        gmtstyle (style :foreground (:main secondary) :background (color 0 0 0 0) :stroke minstroke2 )
         ]
     (push graphics 
           (translate graphics centerx centery)
@@ -363,8 +369,7 @@
 
       ; and an extra minute-dot on the hour...
       ; with a line out to the minutes ring
-     (iarc 0 0 tmdiam tmdiam (+ hourdeg minofhourdeg -0.01) 0.01 java.awt.geom.Arc2D/OPEN) hrstyle2
-
+     (iarc 0 0 tmdiam tmdiam (+ hourdeg minofhourdeg -0.1) 0.1 java.awt.geom.Arc2D/OPEN) gmtstyle
     ; the minutes ; drawn in two parts
 ;    (stroke 0 220 20)
 ;    (stroke-weight 3)
@@ -383,10 +388,13 @@
 ;    (stroke-weight 16)
     (iarc 0 0 diam diam 0 stopdeg java.awt.geom.Arc2D/OPEN) minstyle2
 ;
-;    ; let's see... red 'dot' on the GMT hour
-;    (stroke 250 25 25)
-;    (stroke-weight 5)
-;    (arc 0 0 tmdiam tmdiam (- gmtrad onerad) (+ gmtrad onerad))
+    ; let's see... 'dot' on the GMT hour
+
+    (iarc 0 0 tmdiam tmdiam (- gmtdeg 1) 2) gmtstyle
+    (iarc 0 0 tmdiam tmdiam (- hrofdaydeg 1) 2) hrofdaystyle
+    ;(push graphics (rotate graphics (* gmtrad (/ 180 PI)))
+    ;      (draw graphics (circle 0 tmdiam 10) gmtstyle)
+    ;      )
 ;
 ;    (stroke 0 13 5)
 ;    (stroke-weight 50)
@@ -399,9 +407,9 @@
   )
  ))
 
-(defn draw-forecastclock 
-  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics diamlow diamhigh]
-  (let [
+(defn draw-forecast
+  [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics config diamlow diamhigh]
+  (try (let [
         width (.getWidth panel)
         height (.getHeight panel)
         size (min height width)
@@ -409,22 +417,65 @@
         centery (half height)
         dlow (* size diamlow 0.5)
         dhigh (* size diamhigh 0.5)
-        
+        ddiff (- dhigh dlow)
+        dmid (* 0.5 (+ dlow dhigh))
+
+        fcast (embellir.curator/get-curio "forecast")
+            ;peek at temperatures with this:
+            ;      x (sort (let [ fcast (embellir.curator/get-curio "forecast") ] (map #(conj []  % (get-in fcast [% :TemperatureF] )) (keys fcast))))
         p embellir.illustrator.colors/default-palette
         primary (:primary p)
+        secondary (:secondary p)
 
-        stroke (stroke :width 5)
-        style (style :foreground (:main primary) :stroke stroke )
+        stroke (stroke :width 1)
+        style-main (style :foreground (:main primary) :stroke stroke :background (:fill primary) )
+        style-hi (style :foreground (:highlight primary) :stroke stroke )
+        style-shd (style :foreground (:shadow primary) :stroke stroke )
+        style-secondary-highlight (style :foreground (:highlight secondary) :stroke stroke )
+        style-secondary-main (style :foreground (:main secondary) :stroke stroke )
+        
+        datelist (let [
+                       starttime (clj-time.local/local-now)
+                       hourlist (take 10 (clj-time.periodic/periodic-seq starttime (clj-time/hours 1) )) 
+                       formatter (clj-time.format/formatter-local "MM/dd-HH")
+                       ]
+                   (map #(clj-time.format/unparse formatter %) hourlist)
+                   )
+        
         ]
+    
     (push graphics
           (translate graphics centerx centery)
-          (draw graphics
+          (rotate graphics -180)
+          (comment draw graphics
             (circle 0 0 dlow) style
             (circle 0 0 dhigh) style
-                
                 )
-          )
-    )
+          (rotate graphics (hour-to-degrees-12 (clj-time/hour (clj-time.local/local-now)))) ;need to rotate to current hr
+          (doseq [d datelist]
+            (let [data (get fcast d ) ]
+              (when data
+                (let [temp (Integer. (str (:TemperatureF data)))
+                      precip (Integer. (str (:PrecipitationPotential% data)))
+                      arcsize (* 360 (Math/sin (/ temp 100)))]  
+                  ;emtpy circle
+                  (draw graphics (circle 0 dmid (half ddiff) ) style-shd)
+                  ;fill in temp
+                  (draw graphics (iarc 0 dmid ddiff ddiff (- (half arcsize)) arcsize java.awt.geom.Arc2D/CHORD) style-main)
+                  (draw graphics (iarc 0 dmid ddiff ddiff (- (half arcsize)) arcsize java.awt.geom.Arc2D/CHORD) style-main)
+                  ;overlay with precipitation%
+                  (draw graphics (circle 0 dmid (/ precip (half ddiff))) style-secondary-highlight)
+                  ;this was ugly...
+                  ;(draw graphics (line 0 dlow 0 (+ dlow temp)) style-main)
+                  (rotate graphics 30))
+
+                )
+
+              )
+            )
+          
+      )
+    ))
  
   )
 
@@ -478,9 +529,9 @@
                          }
 
         ;funcs [draw-timeclock draw-monthclock draw-forecastclock draw-financeclock] 
-        funcs [draw-timeclock draw-monthclock ]
+        funcs [draw-timeclock draw-monthclock draw-forecast]
         func-seq (map partial funcs (repeat panel) (repeat graphics) (repeat config))
-        diameters [[0.6 0.7] [0.8 0.95] [0.5 0.6] [0.4 0.6]]
+        diameters [[0.6 0.7] [0.8 0.95] [0.2 0.3] [0.4 0.6]]
         
         ]
 
@@ -509,4 +560,5 @@
 ;this forces a redraw when the file is reloaded
 (embellir.illustrator.renderer/repaint-entity "polarclock")
 
+;(clojure.repl/dir embellir.doodles.polarclock)
 

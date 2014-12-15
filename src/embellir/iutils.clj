@@ -15,6 +15,10 @@
 
 ;(defn abs [x] (if (>= 0 x) x (- x)))
 
+(def PI java.lang.Math/PI)
+(defn radians [degrees] (* degrees (/ PI 180)))
+(defn degrees [radians] (* radians (/ 180 PI)))
+
 (defn iarc
   "return an arc, defined from the center instead of from the corners
   also reverse drawing direction of arc (such that positive values turn clockwise)
@@ -29,14 +33,40 @@
   ([x y w h start extent]
    (iarc x y w h start extent java.awt.geom.Arc2D/OPEN)))
 
+(defn ringarc
+  "returns a GeneralPath like a slice of a ring, defined by outer and inner
+  radius and size of angle in degrees
+  [x y w1 h1 w2 h2 start extent]"
+  [x y w1 h1 w2 h2 start extent]
+  (let [hw1 (* 0.5 w1)
+        hh1 (* 0.5 h1)
+        hw2 (* 0.5 w2)
+        hh2 (* 0.5 h2)
+        tstart (radians start)
+        textent (radians (+ start extent))
+        tmid (* 0.5 (- textent tstart))
+;        nstart (- start)
+;        nextent (- extent)
+        
+        ]
+;    (println w1 h1 start ":" (* hw1  (Math/cos tstart))  (* hh1  (Math/sin tstart)))
+;    (println w2 h2 extent ":" (* hw2  (Math/cos textent))  (* hh2  (Math/sin textent)))
+;    (println tstart tmid textent (* hw2  (Math/cos tmid))  (* hh2  (Math/sin tmid)))
+    (doto (new java.awt.geom.GeneralPath)
+      (.moveTo (* hw1 (Math/cos tstart)) (* hh1 (Math/sin tstart)))
+      (.lineTo (* hw2 (Math/cos tstart)) (* hh2 (Math/sin tstart)) )
+      (.quadTo (* hw2 (Math/cos tmid)) (* hh2 (Math/sin tmid))  (* hw2 (Math/cos textent)) (* hh2 (Math/sin textent)) )
+      (.lineTo (* hw1 (Math/cos textent)) (* hh1 (Math/sin textent)) )
+      (.quadTo (* hw1  (Math/cos tmid))  (* hh1  (Math/sin tmid))  (* hw1 (Math/cos tstart)) (* hh1 (Math/sin tstart)) )
+      )
+    ))
+;(ringarc 0 0, 10 10, 15 15, 0 90)
+;
 (defn hex
   "draw a hexagon"
   []
   )
 
-(def PI java.lang.Math/PI)
-(defn radians [degrees] (* degrees (/ PI 180)))
-(defn degrees [radians] (* radians (/ 180 PI)))
 
 (defn point-on-ellipse [x y w h deg]
   (let [t (radians (- 90 deg))]

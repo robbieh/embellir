@@ -24,8 +24,11 @@
                            [instaparse "1.3.2"]
                            [org.clojure/core.memoize "0.5.6"]
                            [info.hoetzel/clj-nio2 "0.1.1"]
-                           [org.clojars.seancorfield/clj-soap "0.2.0"]
+                           [com.uswitch/clj-soap "0.2.3"]
+;                           [org.clojars.pallix/batik]
                            [alembic "0.2.1"]
+                           [weathergov-hourly-forecast "0.0.1"]
+                           ;[tikkba "0.5.0"]
                            ]
 ;            :profiles {:dev {:dependencies [[alembic "0.2.1"]]}}
             :source-paths ["src", "/home/robbie/.embellir/"]
