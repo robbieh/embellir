@@ -26,6 +26,7 @@
                            [info.hoetzel/clj-nio2 "0.1.1"]
                            [org.clojars.seancorfield/clj-soap "0.2.0"]
                            [alembic "0.2.1"]
+                           [weathergov-hourly-forecast "0.0.1"]
                            ]
 ;            :profiles {:dev {:dependencies [[alembic "0.2.1"]]}}
             :source-paths ["src", "/home/robbie/.embellir/"]
