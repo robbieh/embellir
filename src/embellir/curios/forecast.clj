@@ -25,4 +25,14 @@
 (comment
   (embellir.curator/curate "forecast")
   (embellir.curator/get-curio "forecast")
-  )
+  
+  ;visually comparing this to output from website...
+  ;returns date and temp
+  (let [c (embellir.curator/get-curio "forecast")
+        f (fn [k] 
+            [k (:TemperatureF (get c  k))]     
+            )]
+    (map f (keys c)))
+
+
+    )

@@ -27,11 +27,11 @@
 ;(get-calendars calrc)
 
 (defn calendar-query [start-date end-date] 
-(let [start-date  (clj-time.format/unparse (clj-time.format/formatters :basic-date-time-no-ms) start-date)
-      end-date    (clj-time.format/unparse (clj-time.format/formatters :basic-date-time-no-ms) end-date)]
-  (l/document (l/parse (io/resource "calendar-query.template.xml") :xml)
-     (l/element= :c:time-range) 
-     (comp (l/attr "end"  end-date) (l/attr "start" start-date)))))
+  (let [start-date  (clj-time.format/unparse (clj-time.format/formatters :basic-date-time-no-ms) start-date)
+        end-date    (clj-time.format/unparse (clj-time.format/formatters :basic-date-time-no-ms) end-date)]
+    (l/document (l/parse (io/resource "calendar-query.template.xml") :xml)
+       (l/element= :c:time-range) 
+       (comp (l/attr "end"  end-date) (l/attr "start" start-date)))))
 
 ;(calendar-query (clj-time.core/now ) (clj-time.core/minus (clj-time.core/now ) (clj-time.core/days 1)))
 (defn split-n-scrub [s]
@@ -44,16 +44,17 @@
 (defn query-cal-data [start-date end-date calrc] 
   (let [cqdoc     (calendar-query start-date end-date)
         url       (str (:urlbase calrc ) (:calbasepath calrc) (:calendar calrc))
-        response  @(http/report  url {:basic-auth [(:user calrc) (:pass calrc)] :body cqdoc}) 
+        response  @(http/report  url {:basic-auth [(:user calrc) (:pass calrc)] :body cqdoc :insecure? true}) 
         reportdoc (:body response)
         ]
-  (map (comp ical-map #(apply str %) :content) (l/select (l/parse reportdoc :xml) (l/element= :cal:calendar-data)))
+  (if  (:error response) {:error (:error response)}
+  (map (comp ical-map #(apply str %) :content) (l/select (l/parse reportdoc :xml) (l/element= :cal:calendar-data))))
     )
   )
 
 
 
-(comment
+(comment 
 
 (let [calrc (read-string (slurp (clojure.java.io/file (System/getenv "HOME") ".calendar-seq.rc")))
         now (clj-time.core/now)
