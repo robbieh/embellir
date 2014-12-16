@@ -26,8 +26,9 @@
                            [info.hoetzel/clj-nio2 "0.1.1"]
                            [com.uswitch/clj-soap "0.2.3"]
 ;                           [org.clojars.pallix/batik]
-                           [alembic "0.2.1"]
+                           [org.apache.xmlgraphics/batik-transcoder "1.7"] 
                            [weathergov-hourly-forecast "0.0.1"]
+                           [alembic "0.2.1"]
                            ;[tikkba "0.5.0"]
                            ]
 ;            :profiles {:dev {:dependencies [[alembic "0.2.1"]]}}
