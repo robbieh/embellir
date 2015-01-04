@@ -6,6 +6,7 @@
   (:require 
      [embellir.illustrator :as illustrator]
      [embellir.curator :as curator]
+     [embellir.utility.sunrisesunset]
      [clj-time.core :as clj-time]
      [clj-time.local]
      [clj-time.predicates]
@@ -171,18 +172,11 @@
 ;          (rotate graphics (half degs))
           (translate graphics 0 strokewidth)
           (rotate graphics 90)
-          (let [slicesize (/ 360 item-count)
+          
+          (let [slicesize (safe-divide 360 item-count)
                 rotation  (map #(* slicesize %) (range item-count))
-                dia       (/ itemdiam item-count)
-                offset    (case item-count
-                            1 0
-                            2 (half itemdiam)
-                            3 (/ itemdiam 2.15470)
-                            4 (/ itemdiam 2.41421)
-                            5 (/ itemdiam 2.70130)
-                            :else (/ itemdiam 3)
-                            ) ;thank you, http://mathworld.wolfram.com/CirclePacking.html
-                              ;even though this is TOTALLY a cheat
+                dia       (calculate-circle-ring-radius (half itemdiam) item-count)
+                offset    (+ 0 (- (half itemdiam) dia))
                 ]
             (doseq [r rotation]
               (push graphics
@@ -230,10 +224,12 @@
         hdiff (half diamdiff)
         mdiam diamlow ;(+ diamlow (* 0.01 diamdiff))
         p embellir.illustrator.colors/default-palette
+        primary (:primary p)
         secondary (:secondary p)
         mstroke (stroke :width 3)
         mstyle (style :foreground (:main secondary)  :stroke mstroke )
         xstyle (style :foreground (:main secondary)  :background (:main secondary ) :stroke (stroke :width 1) )
+        weekendstyle (style :foreground (:shadow primary) :background (:shadow primary) :stroke (stroke :width 1))
         today (clj-time/today) 
         day-today (clj-time/day today)
         month-today (clj-time/month today)
@@ -243,7 +239,7 @@
         end-date (clj-time/from-now (clj-time/days (inc (:forward monthctl))))
         spanival (clj-time/interval start-date end-date)
         deg-per-day (/ 360 days-this-month)
-        deg-per-day-span (/ 270 span ) ;270 to get 3/4ths of circle
+        deg-per-day-span (safe-divide 270 span ) ;270 to get 3/4ths of circle
         day-width (circle-arc-length (half diamhigh) deg-per-day)
         caldates (get-cal-dates (curator/get-curio "calendar") monthctl)
         daymode (or (:daymode monthctl) :ticks)
@@ -275,9 +271,15 @@
                     (rotate graphics (* -0.5 deg-per-day))
                     (draw graphics (line 0 (half diamlow) 0 (half diamhigh )) mstyle))
                     ) 
+                  ;this draws a circle on weekend days
+                  (translate graphics 0 (half diamhigh)) ;jump to outside ring
+                  (rotate graphics 180) ;turn around to face center of circle again
+                  (let [dow (clj-time/day-of-week d)] 
+                    (when (or (= dow 6) (= dow 7))
+                      (push graphics 
+                            (draw graphics (circle 0 (half hdiff) (half hdiff)) weekendstyle))
+                      ))
                   ;this draws the curved-wedge pieces for each day
-                    (translate graphics 0 (half diamhigh)) ;jump to outside ring
-                    (rotate graphics 180) ;turn around to face center of circle again
                     (when (= daymode :curves)
                     (push graphics
                           (translate graphics  (- (half day-width)) 0) ;slide over to middle of wedge
@@ -289,7 +291,7 @@
                         item (get caldates dstr) ]
                     (when item 
                       (translate graphics 0 (half hdiff))
-                      (draw-cal-item graphics d item (half (half hdiff)) (:calmode monthctl)) ))
+                      (draw-cal-item graphics d item (half hdiff) (:calmode monthctl)) ))
 
                  (if (= d today) (draw-today graphics d (half diamhigh) hdiff )))
 
@@ -324,18 +326,22 @@
     ;    y     (:y (:position entity))
         ;stoprad  (minutes-to-radians (clj-time/minute (clj-time/now)))
         stopdeg  (minutes-to-degrees (clj-time/minute (clj-time/now)))
-        gmtdeg  (+ (hour-to-degrees (clj-time/hour (clj-time/now)))(safe-divide 360 (minutes-to-degrees (clj-time/minute (clj-time/now)))))
-        hrofdaydeg  (+ (hour-to-degrees (clj-time/hour (clj-time.local/local-now)))(safe-divide 360 (minutes-to-degrees (clj-time/minute (clj-time.local/local-now)))))
+        gmtdeg  (+ (hour-to-degrees (clj-time/hour (clj-time/now))) (/ (clj-time/minute (clj-time/now)) 360))
+        hrofdaydeg  (+ (hour-to-degrees (clj-time/hour (clj-time.local/local-now))) (/ (minutes-to-degrees (clj-time/minute (clj-time.local/local-now))) 360))
         ;hourrad  (hour-to-radians-12 (clj-time/hour (clj-time.local/local-now)))
         hourdeg  (hour-to-degrees-12 (clj-time/hour (clj-time.local/local-now)))
         ;secrad  (minutes-to-radians (clj-time/sec (clj-time.local/local-now)))
         ;secdeg (minutes-to-degrees (clj-time/second (clj-time.local/local-now)))
-       onerad (radians 1)
+        onerad (radians 1)
         ;minofhourrad (/ stoprad 14)
         minofhourdeg (/ stopdeg 15) 
+        sundata (embellir.utility.sunrisesunset/get-sun-rise-set-today (embellir.utility.sunrisesunset/get-sscalculator))
+        sunrisedeg ((fn [[h m] ] (+ (hour-to-degrees h) (/ (minutes-to-degrees m) 360 ))) (mapv read-string (clojure.string/split (first sundata) #":")))
+        sunsetdeg ((fn [[h m] ] (+ (hour-to-degrees h) (/ (minutes-to-degrees m) 360 ))) (mapv read-string (clojure.string/split (second sundata) #":")))
         p embellir.illustrator.colors/default-palette
         primary (:primary p)
         secondary (:secondary p)
+        tertiary (:tertiary p)
         hrstroke (stroke :width 2)
         hrstroke2 (stroke :width 3)
         minstroke1 (stroke :width hrstrk)
@@ -347,6 +353,7 @@
         minstyle2 (style :foreground (:main primary) :background (color 0 0 0 0) :stroke minstroke2 )
         hrofdaystyle (style :foreground (:highlight secondary) :background (color 0 0 0 0) :stroke minstroke2 )
         gmtstyle (style :foreground (:main secondary) :background (color 0 0 0 0) :stroke minstroke2 )
+        sunstyle (style :foreground (:highlight tertiary) :background (color 0 0 0 0) :stroke minstroke1 )
         ]
     (push graphics 
           (translate graphics centerx centery)
@@ -354,6 +361,11 @@
       
         ;        (iarc 0 0 tmdiam tmdiam 0 -90) tmpstyle2
 ;                (arc 0 0 tmdiam tmdiam 0 270) tmpstyle
+
+    ; The swath indicating daytime, the GMT mark, and the 24h time mark
+    (iarc 0 0 tmdiam tmdiam sunrisedeg (- sunsetdeg sunrisedeg)) sunstyle
+    (iarc 0 0 tmdiam tmdiam (- gmtdeg 1) 2) gmtstyle
+    (iarc 0 0 tmdiam tmdiam (- hrofdaydeg 1) 2) hrofdaystyle
 
       ; an hour-size mark for the hour
       (iarc 0 0 tmdiam tmdiam hourdeg 30 java.awt.geom.Arc2D/OPEN) hrstyle; 30 because 12h clock!
@@ -388,10 +400,7 @@
 ;    (stroke-weight 16)
     (iarc 0 0 diam diam 0 stopdeg java.awt.geom.Arc2D/OPEN) minstyle2
 ;
-    ; let's see... 'dot' on the GMT hour
-
-    (iarc 0 0 tmdiam tmdiam (- gmtdeg 1) 2) gmtstyle
-    (iarc 0 0 tmdiam tmdiam (- hrofdaydeg 1) 2) hrofdaystyle
+              
     ;(push graphics (rotate graphics (* gmtrad (/ 180 PI)))
     ;      (draw graphics (circle 0 tmdiam 10) gmtstyle)
     ;      )
@@ -426,13 +435,19 @@
         p embellir.illustrator.colors/default-palette
         primary (:primary p)
         secondary (:secondary p)
+        tertiary (:tertiary p)
 
-        stroke (stroke :width 1)
-        style-main (style :foreground (:main primary) :stroke stroke :background (:fill primary) )
-        style-hi (style :foreground (:highlight primary) :stroke stroke )
-        style-shd (style :foreground (:shadow primary) :stroke stroke )
-        style-secondary-highlight (style :foreground (:highlight secondary) :stroke stroke )
-        style-secondary-main (style :foreground (:main secondary) :stroke stroke )
+        stroke1 (stroke :width 1)
+        stroke2 (stroke :width 2)
+        stroke3 (stroke :width 3)
+        stroke5 (stroke :width 5)
+        style-main (style :foreground (:main primary) :stroke stroke1 :background (:fill primary) )
+        style-hi (style :foreground (:highlight primary) :stroke stroke1 )
+        style-shd (style :foreground (:shadow primary) :stroke stroke1 )
+        style-secondary-highlight (style :foreground (:highlight secondary) :stroke stroke3 )
+        style-secondary-main (style :foreground (:main secondary) :stroke stroke1 )
+        style-tertiary-main (style :foreground (:main tertiary) :stroke stroke2)
+        style-tertiary-highlight (style :foreground (:highlight tertiary) :stroke stroke2)
         
         datelist (let [
                        starttime (clj-time.local/local-now)
@@ -456,15 +471,21 @@
             (let [data (get fcast d ) ]
               (when data
                 (let [temp (Integer. (str (:TemperatureF data)))
-                      precip (Integer. (str (:PrecipitationPotential% data)))
-                      arcsize (* 360 (Math/sin (/ temp 100)))]  
+                      tsize (* 10 (/ temp ddiff))
+                      precip (try (Integer. (str (:PrecipitationPotential% data)))
+                               ; return 0 if the data can't be parsed into an Int
+                               (catch Exception e 0))
+                      arcsize (* 360 (Math/sin (/ temp 100)))
+                      preciparc (* 360 (/ precip 100))
+                      ]  
                   ;emtpy circle
                   (draw graphics (circle 0 dmid (half ddiff) ) style-shd)
                   ;fill in temp
                   (draw graphics (iarc 0 dmid ddiff ddiff (- (half arcsize)) arcsize java.awt.geom.Arc2D/CHORD) style-main)
-                  (draw graphics (iarc 0 dmid ddiff ddiff (- (half arcsize)) arcsize java.awt.geom.Arc2D/CHORD) style-main)
                   ;overlay with precipitation%
-                  (draw graphics (circle 0 dmid (/ precip (half ddiff))) style-secondary-highlight)
+                  (draw graphics (iarc 0 dmid  ddiff ddiff (- (half preciparc)) preciparc) style-tertiary-highlight)
+                  (draw graphics (iarc 0 dmid  ddiff ddiff (- (half preciparc)) preciparc) style-tertiary-main)
+;                  (draw graphics (circle 0 dmid (* (/ precip 100) (half ddiff))) style-secondary-highlight)
                   ;this was ugly...
                   ;(draw graphics (line 0 dlow 0 (+ dlow temp)) style-main)
                   (rotate graphics 30))
@@ -519,7 +540,6 @@
         centerx (half width)
         centery (half height)
 
-
         graphics-potato {
                          :width width
                          :height height
@@ -531,15 +551,11 @@
         ;funcs [draw-timeclock draw-monthclock draw-forecastclock draw-financeclock] 
         funcs [draw-timeclock draw-monthclock draw-forecast]
         func-seq (map partial funcs (repeat panel) (repeat graphics) (repeat config))
-        diameters [[0.6 0.7] [0.8 0.95] [0.2 0.3] [0.4 0.6]]
+        diameters [[0.6 0.7] [0.8 0.95] [0.4 0.6] [0.4 0.6]]
         
         ]
-
 (doall (map apply func-seq  diameters))
          
-;  (draw-timeclock panel graphics 0.6 0.7)
-;  (draw-monthclock panel graphics 0.8 0.9)
-;  (draw-tenths panel graphics)
     
     )
   nil

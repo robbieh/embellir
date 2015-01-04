@@ -11,9 +11,10 @@
 
 
 (defn read-config-file [filename]
+  (println "file:" filename)
   (with-open [rd (io/reader filename)]
     (doseq [line (line-seq rd)]
-      (println line)
+      (println "line:" line)
       (bitdock/handle-command line)))
   (embellir.illustrator.layout/relayout))
 

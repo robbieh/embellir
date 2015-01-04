@@ -18,7 +18,7 @@
      )
   )
 
-(def entityhints {:sleepms 5000 :central-feature true :placement :fullscreen :background false})
+(def entityhints {:sleepms 5000 :central-feature false :placement :fullscreen :background false})
 
 
 (defn draw-cpu [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics graphics-potato ]
