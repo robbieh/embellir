@@ -24,7 +24,7 @@
                            [instaparse "1.3.2"]
                            [org.clojure/core.memoize "0.5.6"]
                            [info.hoetzel/clj-nio2 "0.1.1"]
-                           [com.uswitch/clj-soap "0.2.3"]
+;                           [com.uswitch/clj-soap "0.2.3"]
 ;                           [org.clojars.pallix/batik]
                            [org.apache.xmlgraphics/batik-transcoder "1.7"] 
                            [weathergov-hourly-forecast "0.0.1"]

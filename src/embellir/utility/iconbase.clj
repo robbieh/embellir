@@ -33,4 +33,3 @@
 ;(.exists (get-icon-location "shopping_cart"))
 ;(get-icon "shopping_cart")
 ;(core-memoize/snapshot memoized-get-icon)
-
