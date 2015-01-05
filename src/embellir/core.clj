@@ -20,16 +20,21 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(defn startup []
+  ; start the curator
+  (curator/start-curator)
 
-; start the curator
-(curator/start-curator)
+  ; start the bitdock
+  (bitdock/start-bitdock)
 
-; start the bitdock
-(bitdock/start-bitdock)
+  ;open the window
+  (embellir.illustrator.window/make-window)
+ )
 
 ;the illustrator is started when embellir.illustrator.window is required in the ns
 
 (defn -main [& args]
+    (startup)
     (when (.exists (File. (str (System/getenv "HOME") "/.embellir.startup")) )
       (read-config-file (str (System/getenv "HOME") "/.embellir.startup")) )
   nil)
