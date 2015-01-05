@@ -89,6 +89,11 @@
         (println (handle-command line)) (recur (read-line))))))
 
 (defn start-bitdock []
-  (server.socket/create-server 9999 handle-stream))
+  (or  (try (server.socket/create-server 9999 handle-stream)
+         (catch java.net.BindException e (println "could not bind 9999, trying 9998") nil))
+      (try (server.socket/create-server 9998 handle-stream)
+        (catch java.net.BindException e (println "could not bind 9999, trying 9998") nil)))
+
+  )
 
 
