@@ -40,6 +40,7 @@
             :repl-options {:timeout 600000}
             :warn-on-reflection true
             :main embellir.core
+            :aot [embellir.core]
             :user  {:repl-options  {:timeout 120000}} 
 
             )
