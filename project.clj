@@ -31,6 +31,7 @@
                            [alembic "0.2.1"]
                            [xalan "2.7.1"]
                            ;[tikkba "0.5.0"]
+                           [com.luckycatlabs/SunriseSunsetCalculator "1.2"]
                            ]
 ;            :profiles {:dev {:dependencies [[alembic "0.2.1"]]}}
             :source-paths ["src", "/home/robbie/.embellir/"]

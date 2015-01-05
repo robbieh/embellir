@@ -113,11 +113,15 @@
   )
 
 
-(defn set-central-feature []
+(defn set-central-feature 
+  ([n]
+   (reset! central-feature n)
+   )
+  ([]
   (let [filterfn   #(get-in % [1 :central-feature])
         candidates (keys (filter filterfn @entities))]
   (reset! central-feature (rand-nth candidates)) ;;TODO - this ain't pretty.
-  candidates)
+  candidates))
   )
 
 (defn layout-central-feature []
@@ -126,51 +130,85 @@
   (let [w           (.getWidth window/xyz) 
         h           (.getHeight window/xyz) 
         orientation (if (> h w) :v :h )
-        margin      (if (= orientation :v) (* 0.1 h) (* 0.1 w))
-        marginseq   (map * (repeat margin) (range))
-        bottom      (- h margin)
         candidates  (remove #(= % @central-feature) (list-layout-candidates))
-        w           (if (= orientation :v) w (- w margin))
-        h           (if (= orientation :h) h (- h margin))
+        ccount      (count candidates)
+        candidatesz (if (> ccount 0) 
+                        (if (= orientation :h) (/ h ccount ) (/ w ccount))
+                        0
+                      )
+        bottom      (- h candidatesz)
+        candidateseq(map * (repeat candidatesz) (range candidatesz))
+        featurew    (if (= orientation :v) w (- w candidatesz))
+        featureh    (if (= orientation :h) h (- h candidatesz))
         ]
     (println "CF:" @central-feature ", Candidates:" candidates)
     (if (= orientation :h)
       (do  ;horizontal orientation
-        (move-entity @central-feature margin 0)
-        (resize-entity @central-feature w h)
-        (doall (map move-entity candidates (repeat 0) marginseq))
-        (doall (map resize-entity candidates (repeat margin) (repeat margin)))
+        (move-entity @central-feature candidatesz 0)
+        (resize-entity @central-feature featurew featureh)
+        (doall (map move-entity candidates (repeat 0) candidateseq))
+        (doall (map resize-entity candidates (repeat candidatesz) (repeat candidatesz)))
         
         )  
       (do  ;vertical orientation
         (move-entity @central-feature 0 0)
-        (resize-entity @central-feature w h)
-        (doall (map move-entity candidates marginseq (repeat bottom)))
-        (doall (map resize-entity candidates (repeat margin) (repeat margin)))
+        (resize-entity @central-feature featurew featureh)
+        (doall (map move-entity candidates candidateseq (repeat bottom)))
+        (doall (map resize-entity candidates (repeat candidatesz) (repeat candidatesz)))
         )))
   )
-
+(identity @entities)
+(map val @entities)
 ;;;;;;;;;;;;; features-grid layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn layout-feature-grid []
   (layout-background)
   (if (nil? @central-feature) (set-central-feature))
-  (let [w           (.getWidth window/xyz) 
-        h           (.getHeight window/xyz) 
-        orientation (if (> h w) :v :h )
-        margin      (if (= orientation :v) (* 0.1 h) (* 0.1 w))
-        marginseq   (map * (repeat margin) (range))
-        bottom      (- h margin)
-        candidates  (remove #(= % @central-feature) (list-layout-candidates))
-        w           (if (= orientation :v) w (- w margin))
-        h           (if (= orientation :h) h (- h margin))
+  (let [w            (.getWidth window/xyz) 
+        h            (.getHeight window/xyz) 
+        orientation  (if (> h w) :v :h )
+        margin       (if (= orientation :v) (* 0.1 h) (* 0.1 w))
+        bottom       (- h margin)
+        candidates   (remove #(= % @central-feature) (list-layout-candidates))
+        features     (keys (filter #(= true (:central-feature (val %))) @entities)) 
+        non-features (clojure.set/difference (set candidates) (set features))
+        fcount       (count features)
+        nfcount      (count non-features)
+        fsz          (if (= orientation :h) (/ h fcount ) (/ w fcount))
+        nfsz         (if (= orientation :h) (/ h nfcount ) (/ w nfcount))
+        fseq         (map * (repeat fsz) (range fsz))
+        nfseq        (map * (repeat nfsz) (range nfsz))
+        featurew     (if (= orientation :v) w (- w nfsz))
+        featureh     (if (= orientation :h) h (- h nfsz))
+        marginseq (seq [1 2 3 ]) ;blragh this should go away
+
+        size-table (get-optimal-size fcount featurew featureh)
+        {:keys [cols
+                rows
+                boxsize 
+                xmargin 
+                ymargin]} size-table
+        xstart            (/ xmargin 2)
+        ystart            (/ ymargin 2)
+        xseq              (map     *
+                                   (flatten (repeat (range 0 cols))) 
+                                   (repeat boxsize))
+        yseq              (flatten (map #(map * 
+                                              (repeat cols %) 
+                                              (repeat boxsize)) 
+                                        (flatten (repeat (range 0 cols)))))
+        xmseq            (repeat xstart)
+        ymseq            (repeat ystart)
         ]
-    (println "CF:" @central-feature ", Candidates:" candidates)
+    (println "features:" features ", non-features:" non-features)
     (if (= orientation :h)
       (do  ;horizontal orientation
-        (move-entity @central-feature margin 0)
-        (resize-entity @central-feature w h)
-        (doall (map move-entity candidates (repeat 0) marginseq))
-        (doall (map resize-entity candidates (repeat margin) (repeat margin)))
+       
+        ;handle features 
+        (doall (map move-entity features (map + xseq xmseq (repeat nfsz)) (map + yseq ymseq )))
+        (doseq [c features] (resize-entity c boxsize boxsize))
+        ;handle non-features
+        (doall (map move-entity non-features (repeat 0) nfseq))
+        (doall (map resize-entity non-features (repeat nfsz) (repeat nfsz)))
         
         )  
       (do  ;vertical orientation
@@ -201,7 +239,19 @@
   )
 
 
+;;;;;;;;;;;;; solar system layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(defn layout-solar-system []
+  (layout-background)
+  (if (nil? @central-feature) (set-central-feature))
+  (let [w            (.getWidth window/xyz)
+        h            (.getWidth window/xyz)
+        candidates   (remove #(= % @central-feature) (list-layout-candidates))
+        features     (keys (filter #(= true (:central-feature (val %))) @entities)) 
+        
+        ]
+    )
 
+  )
 
 
 ;;;;;;;;;;;;; main layout funcitons ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -221,8 +271,10 @@
   (resize-entity "polarclock" 150 150)
   (to-dimension [1 :by 1])
   (.getWidth (config window/xyz :bounds))
-  (set-central-feature)
+  (set-central-feature "polarclock")
+  (set-central-feature "money")
   (layout-central-feature)
+  (layout-feature-grid)
   (println @central-feature)
   (reset! central-feature "ip4map")
   (reset! central-feature "christmas/boxes")

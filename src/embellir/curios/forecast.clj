@@ -4,9 +4,11 @@
   )
 
 
-(defn get-forecast
-  []
-  (pivot-data (get-forecast-table 33.82 -84.36))) 
+(defn get-forecast []
+  (let [location (:location (read-string (slurp (clojure.java.io/file (System/getProperty "user.home") ".embellir.rc"))))]
+    (if (nil? location)
+      (println "Please add {:location {:lat <latitude> :lon <longitude>} to ~/.embellir.rc to get forecasts for your location")
+      (pivot-data (get-forecast-table (:lat location) (:lon location)))))) 
 
 (defn setup-forecast
   []
@@ -25,6 +27,7 @@
 (comment
   (embellir.curator/curate "forecast")
   (embellir.curator/get-curio "forecast")
+  (embellir.curator/run-item "forecast")
   
   ;visually comparing this to output from website...
   ;returns date and temp

@@ -26,12 +26,12 @@
 ;sets of degrees and y-coordinates (on unit circle) to define points for drawing temperature
 ;o - outer, 10s place; i - inner, 1s place
 ;mv indicates direction of movement
-(def odegs (atom (repeatedly 12 #(rand 360) )))
-(def oys   (atom (repeatedly 12 #(+ 0.5 (rand 0.5 )))))
-(def odegmv (atom (repeatedly 12 #(rand-nth [:cw :ccw :cw2 :ccw2]))))
-(def idegs (atom (repeatedly 10 #(rand 360) )))  
-(def iys   (atom (repeatedly 10 #(+ 0.25 (rand 0.5 )))))
-(def idegmv (atom (repeatedly 10 #(rand-nth [:cw2 :ccw2]))))
+(def odegs (atom (into '() (repeatedly 13 #(rand 360) ))))
+(def oys   (atom (into '() (repeatedly 13 #(+ 0.5 (rand 0.5 ))))))
+(def odegmv (atom (into '() (repeatedly 13 #(rand-nth [:cw :ccw :cw2 :ccw2])))))
+(def idegs (atom (into '() (repeatedly 10 #(rand 360) ))))  
+(def iys   (atom (into '() (repeatedly 10 #(+ 0.33 (rand 0.5 ))))))
+(def idegmv (atom (into '() (repeatedly 10 #(rand-nth [:cw2 :ccw2])))))
 
 (defn theta-mv [dir theta]
   (case dir
@@ -43,9 +43,14 @@
     )
   )
 
-(defn perturb-points []
-  (swap! odegs #(map theta-mv @odegmv %) )
-  (swap! idegs #(map theta-mv @idegmv %) )
+
+
+(defn perturb-points! []
+  ;(swap! odegs #(map theta-mv @odegmv %) )
+  ;(swap! idegs #(map theta-mv @idegmv %) )
+  (reset! odegs (doall (map theta-mv @odegmv @odegs)) )
+  (reset! idegs (doall (map theta-mv @idegmv @idegs)) )
+  nil
   )
 
 (def entityhints {:sleepms 5000})
@@ -207,7 +212,7 @@
         style-shd-l (style :foreground (:shadow primary) :stroke stroke-l )
 
         temp (Float. (str (:temp_f w))) 
-        wc (Float. (str (:windchill_f w))) 
+        ;wc (Float. (str (:windchill_f w))) 
 
         ;o - outer, i -inner (o for 10s, i for 1s)
         ocount (quot temp 10)
@@ -221,8 +226,14 @@
         ]
 
     ;text
-    (perturb-points)
+    ;(println ocount (count @odegs) @odegs )
+    ;(println icount (count @idegs) @idegs )
+    (try (perturb-points!)
+      (catch Exception e (spit "/home/robbie/err.txt" (.getStackTrace e)))
+      )
+    
 
+    
     (comment push graphics
 
           (.setColor graphics (:highlight secondary))
@@ -241,29 +252,29 @@
         )
 
     ;ring-arcs for temperature display
-    (push graphics
+    (try (push graphics
           (translate graphics hawidth haheight)
 
           (doseq [i (range ocount)]
             (let [theta (nth @odegs i)
                   y     (* diam (nth @oys i))]
-          
               (push graphics
                     (rotate graphics theta)
                     ;(draw graphics (rect -1 (- y 1) 2 2 ) style-main-l)
                     (draw graphics (ringarc 0 0 (- y owt) (- y owt) (+ y owt) (+ y owt) 0 20 ) style-main-s)
-                    
                     )))
           (doseq [i (range icount)]
             (let [theta (nth @idegs i) 
                   y     (* rad (nth @iys i))]
-         
               (push graphics
                     (rotate graphics theta)
                     ;(draw graphics (rect -1 (- y 1) 2 2 ) style-shd-l)
                     (draw graphics (ringarc 0 0 (- y iwt) (- y iwt) (+ y iwt) (+ y iwt) 0 20 ) style-hi-s)
-                    
                     ))))
+      (catch java.lang.IndexOutOfBoundsException e (println "java.lang.IndexOutOfBoundsException; ocount" ocount "icount" icount "temp" temp "@odegs" @odegs "@oys" @oys)
+        
+        )
+      )
 
 
     ;draw wind speed & direction
@@ -289,8 +300,8 @@
     ))  
 
 (defn draw-doodle [ent ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
-  (draw-alt-weather (curator/get-curio "weather") panel graphics)
-  )
+  (let [w (curator/get-curio "weather")]
+  (when w (draw-alt-weather ent panel graphics))))
 
 (comment defn illustrate []
   (println "foo")

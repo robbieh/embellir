@@ -1,8 +1,10 @@
 (ns embellir.iutils
   (:gen-class)
-  (:import (java.util Calendar Date)
-          (java.awt Graphics2D RenderingHints)
-          (java.awt.image BufferedImage))
+  (:import [java.util Calendar Date]
+          [java.awt Graphics2D RenderingHints]
+          [java.awt.image BufferedImage]
+          [java.awt.geom Area]
+     )
     (:require [embellir.illustrator :as illustrator]
             [clj-time.core :as clj-time]
             [clj-time.local])
@@ -60,6 +62,24 @@
       (.quadTo (* hw1  (Math/cos tmid))  (* hh1  (Math/sin tmid))  (* hw1 (Math/cos tstart)) (* hh1 (Math/sin tstart)) )
       )
     ))
+
+(defn correct-pie  [x y w h s e]
+    (pie  (- x  (* 0.5 w) )  (- y  (* 0.5 h) ) w h  (- s)  (- e)))
+
+(defn oarc
+  [gc, iradius, oradius, start, extent]
+  (let [odiam   (* 2 oradius)
+        pie     (correct-pie 0 0, odiam odiam, start extent)
+        piearea (new Area pie)
+        c       (circle 0 0 iradius)
+        carea   (new Area c)
+        ]
+
+    (.subtract piearea carea)
+    piearea )
+  )
+
+
 ;(ringarc 0 0, 10 10, 15 15, 0 90)
 ;
 (defn hex
@@ -81,4 +101,18 @@
   )
 
 (defn half [x] (* 0.5 x))
+
+;thank you, http://www.had2know.com/academics/inner-circular-ring-radii-formulas-calculator.html
+(defn calculate-circle-ring-radius 
+  "R: radius of outer circle
+  n: number of inner circles
+  returns: radius of smaller circles"
+  [R n]
+  (if (= 1 n) R
+    (let [s (Math/sin (/ PI n))
+          r  (/
+               (* R s)
+               (+ 1 s))
+          ]
+      r )))
 
