@@ -1,4 +1,4 @@
-(defproject embellir "0.1.1"
+(defproject embellir "0.1.2"
             :description "embellir: making beautiful what you need to know"
             :url ""
             :license {:name "Eclipse Public License"
