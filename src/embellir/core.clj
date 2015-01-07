@@ -27,16 +27,28 @@
   ; start the bitdock
   (bitdock/start-bitdock)
 
-  ;open the window
+  ;open the window. this also starts the illustrator
   (embellir.illustrator.window/make-window)
  )
 
-;the illustrator is started when embellir.illustrator.window is required in the ns
+
+(defn find-config-file []
+  (let [home-env-file (str (System/getenv "EMBELLIR_STARTUP"))
+        home-file (str (System/getProperty "user.home") "/.embellir.startup")   
+        home-appdata (str (System/getenv "APPDATA") "\\embellir\\embellir.startup")
+        internal-resource (.getFile (clojure.java.io/resource "embellir.startup"))
+        filecheck (fn [s] (if (.exists (File. (str s))) s nil))
+        ]
+  (or (filecheck home-env-file)
+      (filecheck home-file)
+      (filecheck home-appdata)
+      internal-resource
+      ))
+  )
 
 (defn -main [& args]
     (startup)
-    (when (.exists (File. (str (System/getenv "HOME") "/.embellir.startup")) )
-      (read-config-file (str (System/getenv "HOME") "/.embellir.startup")) )
+    (read-config-file (find-config-file)) 
   nil)
 
 
