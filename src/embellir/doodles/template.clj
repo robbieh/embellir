@@ -1,4 +1,4 @@
-(ns embellir.doodles.cpu
+(ns embellir.doodles.template
   (:import 
      (java.awt Graphics2D RenderingHints)
      (java.awt.image BufferedImage))
