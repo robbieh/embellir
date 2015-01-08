@@ -133,7 +133,9 @@
         candidates  (remove #(= % @central-feature) (list-layout-candidates))
         ccount      (count candidates)
         candidatesz (if (> ccount 0) 
-                        (if (= orientation :h) (/ h ccount ) (/ w ccount))
+                        (if (= orientation :h) 
+                          (min (max (* 0.2 w) (- w h)) (/ h ccount )) 
+                          (min (max (* 0.2 h) (- h w)) (/ w ccount)))
                         0
                       )
         bottom      (- h candidatesz)
