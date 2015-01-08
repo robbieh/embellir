@@ -15,10 +15,16 @@
 (def nws-rss)
 (def radar-url "http://radar.weather.gov/RadarImg/N0R/FFC_N0R_0.gif")
 
-(defn get-weather-map [url]
-
-  
+(defn get-location []
+  (let [location (:location (read-string (slurp (clojure.java.io/file (System/getProperty "user.home") ".embellir.rc"))))]
+    (when (nil? location)
+      (println "Please add {:location {:airport-code \"KXXX\"} to ~/.embellir.rc to get conditions for your location")
+      )
+    location
+    )
   )
+
+
 
 (defn get-weather
   []
@@ -29,8 +35,8 @@
 
 (defn setup-weather
   []
-  (def nws-rss (atom "http://w1.weather.gov/xml/current_obs/KPDK.xml"))
-  (get-weather))
+  (def nws-rss (atom (str "http://w1.weather.gov/xml/current_obs/" (:airport-code (get-location) ".xml"))
+  (get-weather))))
 
 (defn update-weather
   [wdata] 

@@ -3,12 +3,18 @@
   (:use [weathergov-hourly-forecast.core :only [get-forecast-table pivot-data]])
   )
 
+(defn get-location []
+  (let [location (:location (read-string (slurp (clojure.java.io/file (System/getProperty "user.home") ".embellir.rc"))))]
+    (when (nil? location)
+      (println "Please add {:location {:lat <latitude> :lon <longitude>} to ~/.embellir.rc to get forecasts for your location")
+      )
+    location
+    )
+  )
 
 (defn get-forecast []
-  (let [location (:location (read-string (slurp (clojure.java.io/file (System/getProperty "user.home") ".embellir.rc"))))]
-    (if (nil? location)
-      (println "Please add {:location {:lat <latitude> :lon <longitude>} to ~/.embellir.rc to get forecasts for your location")
-      (pivot-data (get-forecast-table (:lat location) (:lon location)))))) 
+  (let [location (get-location)]
+    (if location (pivot-data (get-forecast-table (:lat location) (:lon location)))))) 
 
 (defn setup-forecast
   []
