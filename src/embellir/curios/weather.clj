@@ -35,8 +35,8 @@
 
 (defn setup-weather
   []
-  (def nws-rss (atom (str "http://w1.weather.gov/xml/current_obs/" (:airport-code (get-location) ".xml"))
-  (get-weather))))
+  (def nws-rss (atom (str "http://w1.weather.gov/xml/current_obs/" (:airport-code (get-location)) ".xml")))
+  (get-weather))
 
 (defn update-weather
   [wdata] 
