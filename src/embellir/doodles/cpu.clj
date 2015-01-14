@@ -1,7 +1,9 @@
 (ns embellir.doodles.cpu
   (:import 
      (java.awt Graphics2D RenderingHints)
-     (java.awt.image BufferedImage))
+     (java.awt.image BufferedImage)
+     [java.awt Color]
+     )
   (:require 
      [embellir.illustrator :as illustrator]
      [embellir.curator :as curator]
@@ -20,6 +22,10 @@
 
 (def entityhints {:sleepms 5000 :central-feature false :placement :fullscreen :background false})
 
+(defn add-alpha-to-color [c a]
+  (color (.getRed ^java.awt.Color c) (.getGreen ^java.awt.Color c) (.getBlue ^java.awt.Color c) a))
+;(defn add-alpha-to-color [c a ] (memoize add-alpha-to-color'))
+
 
 (defn draw-cpu [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics graphics-potato ]
   (let [{:keys [width height size hawidth haheight hasize curio now]} graphics-potato
@@ -34,6 +40,8 @@
         p embellir.illustrator.colors/default-palette
         primary (:primary p)
         secondary (:secondary p)
+
+
         ]
     (push graphics
           (translate graphics hawidth haheight)
@@ -50,7 +58,9 @@
                   diam (min maxdiam (* 0.5 one maxdiam))] 
               (draw graphics
                     (iarc 0 0 diam diam 0 segdegree java.awt.geom.Arc2D/PIE)  
-                    (style :foreground :green :background (color 0 128 0 (- 255 (int (* i colorstep)))) :stroke (stroke :with 3)) ;ugh, style need fix
+                    (style :foreground (:shadow primary) 
+                           :background (add-alpha-to-color (:main primary) (- 255  (int  (* i colorstep)))) 
+                           :stroke (stroke :with 3)) ;ugh, style need fix
                     )
                     (rotate graphics (- segdegree)) 
               )
