@@ -1,4 +1,4 @@
-(ns embellir.illustrator.svgutils
+(ns embellir.utility.svgutils
   (:import 
      (java.awt Graphics2D RenderingHints)
      (java.awt.image BufferedImage)
