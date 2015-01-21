@@ -37,21 +37,23 @@
   (let [home (System/getProperty "user.home")
         exts [".clj"]
         path ["src/embellir/curios" 
-              (clojure.java.io/file home ".embellir/embellir/curios")]]
-         
-      (first (drop-while nil?
-        (for [ e exts p path ] 
-          (let [f (clojure.java.io/file p (str itemname e))]
-            (if (.exists f) [f e] )))))
-        
-        )
-  )
+              "embellir/curios"
+              (clojure.java.io/file home ".embellir/embellir/curios")]
+        candidates (for [ e exts p path ] 
+                     (let [f (clojure.java.io/file p (str itemname e))
+                           r (clojure.java.io/resource (str  p "/" itemname e))
+                           ]
+                       (or (if (.exists f) [f e] ) 
+                           (if-not (nil? r) [r e])) 
+                       ))
+        ]
+      (first (drop-while nil? candidates))))
 
 (defn get-curation-map [itemname]
   "try to find function that looks like embellir.curios.<itemname>/curation-map"
   "or else the fully-qualified function name, such as drh.datasupplier.curio/curation-map"
   (let [fqi (str "embellir.curios." itemname)]
-      (load-file (str (first (find-curio itemname))))
+      (load-reader (clojure.java.io/reader (first (find-curio itemname))))
     (when (find-ns (symbol fqi))
       (if-let [func (resolve (symbol fqi "curation-map"))] (func) (println "could not find" itemname)))))
 

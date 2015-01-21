@@ -2,7 +2,6 @@
   (:require 
      [embellir.illustrator.screen :as screen]
      [embellir.illustrator.window :as window]
-     [clojure.math.numeric-tower]
      )
   (:use seesaw.core
      seesaw.graphics
@@ -53,7 +52,7 @@
 ;;;;;;;;;;;;; grid layout ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn make-optimal-size-table [n x y] 
   (apply conj {}   (for [cols (range 1 (inc n))]
-    (let [rows (int  (clojure.math.numeric-tower/ceil (/ n cols)))
+    (let [rows (int  (Math/ceil (/ n cols)))
           colsize (double (/ x cols))
           rowsize (double (/ y rows))
           smallest (min colsize rowsize)

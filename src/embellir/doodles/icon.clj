@@ -22,26 +22,15 @@
 
 (def ^java.awt.image.BufferedImage img (atom nil))
 
-(type (get-img-from-svg "/home/robbie/company.svg"))
 (defn draw-icon [^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
   (when (nil? @img)
-    (reset! img (get-img-from-svg "/home/robbie/company.svg")) )
-  (let [
-        ;icon (get-icon "shopping_cart")
-        icon @img
-        ]
+    (reset! img (get-icon "test")) )
+  (let [icon @img]
       (.drawImage ^java.awt.Graphics2D graphics ^java.awt.Image icon
          0 0 (.getWidth ^javax.swing.JPanel panel) (.getHeight ^javax.swing.JPanel panel)
-         nil
-         ))
-      )
-
-
-
+         nil)))
 
 (defn draw-doodle [ent ^javax.swing.JPanel panel ^java.awt.Graphics2D graphics]
-  (draw-icon panel graphics)
- ; (try (draw-monthclock panel graphics) (catch Exception e (println (str "polarclock month: " (.getMessage e)))))
-  )
+  (draw-icon panel graphics))
 
 (embellir.illustrator.renderer/repaint-entity "icon")

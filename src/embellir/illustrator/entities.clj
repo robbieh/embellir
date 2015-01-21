@@ -29,14 +29,17 @@
   (let [home (System/getProperty "user.home")
         exts [".emb" ".clj"]
         path ["src/embellir/doodles" 
-              (clojure.java.io/file home ".embellir/embellir/doodles")]]
-         
-      (first (drop-while nil?
-        (for [ e exts p path ] 
-          (let [f (clojure.java.io/file p (str ent e))]
-            (if (.exists f) [f e] )))))
-        
-        ))
+              "embellir/doodles"
+              (clojure.java.io/file home ".embellir/embellir/doodles")]
+        candidates (for [ e exts p path ] 
+                     (let [f (clojure.java.io/file p (str ent e))
+                           r (clojure.java.io/resource (str p "/" ent e))
+                           ]
+                       (or (if (.exists f) [f e] )
+                           (if-not (nil? r) [r e])) 
+                       ))
+        ]
+      (first (drop-while nil? candidates)) ))
 
 (defn resolve-emb-file! [f]
   (let [conf (read-string (slurp f))
@@ -63,7 +66,7 @@
        filetoload (resolve-entity doodlename )
        ]
    (println "loading:" filetoload)
-   (load-file filetoload) ;this pulls in a .clj namespace
+   (load-reader (clojure.java.io/reader filetoload)) ;this pulls in a .clj namespace
    (if (find-ns (symbol fqi))
      (if-let [func (resolve (symbol fqi "draw-doodle"))]
        (let [
