@@ -2,11 +2,11 @@
 
 embellir: *making beautiful that which you want to know*
 
-![screenshot of version 0.1.2](https://raw.githubusercontent.com/robbieh/embellir/master/doc/images/embellir-0.1.2.png)
+![screenshot of version 0.1.2](https://raw.githubusercontent.com/robbieh/embellir/master/doc/images/embellir-0.1.3.png)
 
 ## Usage
 
-    $ java -jar embellir-0.1.2-standalone.jar 
+    $ java -jar embellir-0.1.3-standalone.jar 
 
 Once running, embellir listens on port 9999. You can connect to that port and
 issue commands as detailed in the protocol section below.
