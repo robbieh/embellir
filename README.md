@@ -2,7 +2,7 @@
 
 embellir: *making beautiful that which you want to know*
 
-![screenshot of version 0.1.2](https://raw.githubusercontent.com/robbieh/embellir/master/doc/images/embellir-0.1.3.png)
+![screenshot of version 0.1.3](https://raw.githubusercontent.com/robbieh/embellir/master/doc/images/embellir-0.1.2.png)
 
 ## Usage
 
